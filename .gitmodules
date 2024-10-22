@@ -1,7 +1,7 @@
 [submodule "art"]
-    path = art
-    url = https://github.com/Mackery6969/Test-Engine-v3-Mackery-Edition.art
+	path = art
+	url = https://github.com/Mackery6969/Test-Engine-v3-Mackery-Edition.art
 
 [submodule "assets"]
-    path = assets
-    url = https://github.com/Mackery6969/Test-Engine-v3-Mackery-Edition.assets
+	path = assets
+	url = https://github.com/Mackery6969/Test-Engine-v3-Mackery-Edition.assets

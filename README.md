@@ -1,4 +1,4 @@
-# Friday Night Funkin' 
+# Friday Night Funkin'
 
 Friday Night Funkin' is a rhythm game. Built using HaxeFlixel for Ludum Dare 47.
 
@@ -23,14 +23,19 @@ Feel free to start learning to mod the game by reading our [documentation](https
 
 # Credits and Special Thanks
 
-Full credits can be found in-game, or in the `credits.json` file which is located [here](https://github.com/FunkinCrew/funkin.assets/blob/main/exclude/data/credits.json).
+Full credits can be found in-game,
+
+- Mackery - All Alone Programmer.
+
+## Funkin' Crew
+[here](https://github.com/FunkinCrew/funkin.assets/blob/main/exclude/data/credits.json).
 
 ## Programming
 - [ninjamuffin99](https://twitter.com/ninja_muffin99) - Lead Programmer
 - [EliteMasterEric](https://twitter.com/EliteMasterEric) - Programmer
 - [MtH](https://twitter.com/emmnyaa) - Charting and Additional Programming
 - [GeoKureli](https://twitter.com/Geokureli/) - Additional Programming
-- Our contributors on GitHub
+- Their contributors on GitHub
 
 ## Art / Animation / UI
 - [PhantomArcade3K](https://twitter.com/phantomarcade3k) - Artist and Animator

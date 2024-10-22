@@ -57,6 +57,9 @@ class PreferencesMenu extends Page
     createPrefItemCheckbox('Naughtyness', 'Toggle displaying raunchy content', function(value:Bool):Void {
       Preferences.naughtyness = value;
     }, Preferences.naughtyness);
+    createPrefItemCheckbox('Ghost Tapping', 'Toggle Ghost Tapping (no penalty for pressing a note when none is there)', function(value:Bool):Void {
+      Preferences.ghostTapping = value;
+    }, Preferences.ghostTapping);
     createPrefItemCheckbox('Downscroll', 'Enable to make notes move downwards', function(value:Bool):Void {
       Preferences.downscroll = value;
     }, Preferences.downscroll);

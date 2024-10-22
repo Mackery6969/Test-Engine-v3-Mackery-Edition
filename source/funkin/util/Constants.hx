@@ -19,7 +19,7 @@ class Constants
    * The title of the game, for debug printing purposes.
    * Change this if you're making an engine.
    */
-  public static final TITLE:String = "Friday Night Funkin'";
+  public static final TITLE:String = "Friday Night Funkin' Test Engine'";
 
   /**
    * The current version number of the game.
@@ -488,7 +488,7 @@ class Constants
   public static final JUDGEMENT_KILLER_COMBO_BREAK:Bool = false;
   public static final JUDGEMENT_SICK_COMBO_BREAK:Bool = false;
   public static final JUDGEMENT_GOOD_COMBO_BREAK:Bool = false;
-  public static final JUDGEMENT_BAD_COMBO_BREAK:Bool = true;
+  public static final JUDGEMENT_BAD_COMBO_BREAK:Bool = false;
   public static final JUDGEMENT_SHIT_COMBO_BREAK:Bool = true;
 
   // % Hit
@@ -535,16 +535,15 @@ class Constants
    * OTHER
    */
   // ==============================
-  #if FEATURE_GHOST_TAPPING
   // Hey there, Eric here.
   // This feature is currently still in development. You can test it out by creating a special debug build!
   // lime build windows -DFEATURE_GHOST_TAPPING
+  // stfu Eric -Mackery
 
   /**
    * Duration, in seconds, after the player's section ends before the player can spam without penalty.
    */
   public static final GHOST_TAP_DELAY:Float = 3 / 8;
-  #end
 
   /**
    * The maximum number of previous file paths for the Chart Editor to remember.

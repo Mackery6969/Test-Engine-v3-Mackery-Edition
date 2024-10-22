@@ -40,7 +40,6 @@ There are several useful build flags you can add to a build to affect how it wor
 - `-DFEATURE_CHART_EDITOR` or `-DNO_FEATURE_CHART_EDITOR` to forcibly enable or disable the chart editor in the Debug menu.
 - `-DFEATURE_SCREENSHOTS` or `-DNO_FEATURE_SCREENSHOTS` to forcibly enable or disable the screenshots feature.
 - `-DFEATURE_STAGE_EDITOR` to forcibly enable the experimental stage editor.
-- `-DFEATURE_GHOST_TAPPING` to forcibly enable an experimental gameplay change to the anti-mash system.
 
 # Troubleshooting
 

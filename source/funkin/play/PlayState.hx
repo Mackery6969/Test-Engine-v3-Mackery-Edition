@@ -2481,11 +2481,7 @@ class PlayState extends MusicBeatSubState
 
       var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
 
-      #if FEATURE_GHOST_TAPPING
       if ((!playerStrumline.mayGhostTap()) && notesInDirection.length == 0)
-      #else
-      if (notesInDirection.length == 0)
-      #end
       {
         // Pressed a wrong key with no notes nearby.
         // Perform a ghost miss (anti-spam).
@@ -2495,31 +2491,31 @@ class PlayState extends MusicBeatSubState
         playerStrumline.playPress(input.noteDirection);
         trace('PENALTY Score: ${songScore}');
       }
-    else if (notesInDirection.length == 0)
-    {
-      // Press a key with no penalty.
+      else if (notesInDirection.length == 0)
+      {
+        // Press a key with no penalty.
 
-      // Play the strumline animation.
-      playerStrumline.playPress(input.noteDirection);
-      trace('NO PENALTY Score: ${songScore}');
-    }
-    else
-    {
-      // Choose the first note, deprioritizing low priority notes.
-      var targetNote:Null<NoteSprite> = notesInDirection.find((note) -> !note.lowPriority);
-      if (targetNote == null) targetNote = notesInDirection[0];
-      if (targetNote == null) continue;
+        // Play the strumline animation.
+        playerStrumline.playPress(input.noteDirection);
+        trace('NO PENALTY Score: ${songScore}');
+      }
+      else
+      {
+        // Choose the first note, deprioritizing low priority notes.
+        var targetNote:Null<NoteSprite> = notesInDirection.find((note) -> !note.lowPriority);
+        if (targetNote == null) targetNote = notesInDirection[0];
+        if (targetNote == null) continue;
 
-      // Judge and hit the note.
-      // trace('Hit note! ${targetNote.noteData}');
-      goodNoteHit(targetNote, input);
-      // trace('Score: ${songScore}');
+        // Judge and hit the note.
+        // trace('Hit note! ${targetNote.noteData}');
+        goodNoteHit(targetNote, input);
+        // trace('Score: ${songScore}');
 
-      notesInDirection.remove(targetNote);
+        notesInDirection.remove(targetNote);
 
-      // Play the strumline animation.
-      playerStrumline.playConfirm(input.noteDirection);
-    }
+        // Play the strumline animation.
+        playerStrumline.playConfirm(input.noteDirection);
+      }
     }
 
     while (inputReleaseQueue.length > 0)

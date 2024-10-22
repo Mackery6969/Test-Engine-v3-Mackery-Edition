@@ -94,6 +94,7 @@ class Save
           // Reasonable defaults.
           framerate: 60,
           naughtyness: true,
+          ghostTapping: true,
           downscroll: false,
           flashingLights: true,
           zoomCamera: true,
@@ -1280,6 +1281,12 @@ typedef SaveDataOptions =
    * @default `true`
    */
   var naughtyness:Bool;
+
+  /**
+   * No penalty for pressing a note when none is there
+   * @default 'true'
+   */
+  var ghostTapping:Bool;
 
   /**
    * If enabled, the strumline is at the bottom of the screen rather than the top.

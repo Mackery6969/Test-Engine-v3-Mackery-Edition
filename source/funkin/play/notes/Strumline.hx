@@ -17,7 +17,6 @@ import funkin.ui.options.PreferencesMenu;
 import funkin.util.SortUtil;
 import funkin.modding.events.ScriptEvent;
 import funkin.play.notes.notekind.NoteKindManager;
-import funkin.input.Controls;
 
 /**
  * A group of sprites which handles the receptor, the note splashes, and the notes (with sustains) for a given player.
@@ -991,31 +990,5 @@ class Strumline extends FlxSpriteGroup
   function compareHoldNoteSprites(order:Int, a:SustainTrail, b:SustainTrail):Int
   {
     return FlxSort.byValues(order, a?.strumTime, b?.strumTime);
-  }
-
-  // Add a getter for controls in Strumline.hx similar to MusicBeatSubState
-  var controls(get, never):Controls;
-
-  inline function get_controls():Controls
-  {
-    return PlayerSettings.player1.controls;
-  }
-
-  public function anyKeyPressed():Bool
-  {
-    // Use the controls getter to access controls
-    var pressArray:Array<Bool> = [
-      controls.NOTE_LEFT_P,
-      controls.NOTE_DOWN_P,
-      controls.NOTE_UP_P,
-      controls.NOTE_RIGHT_P
-    ];
-
-    // Check if any control is pressed
-    for (pressed in pressArray)
-    {
-      if (pressed) return true;
-    }
-    return false;
   }
 }

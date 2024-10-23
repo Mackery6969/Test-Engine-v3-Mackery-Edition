@@ -3507,4 +3507,20 @@ class PlayState extends MusicBeatSubState
     resyncVocals();
   }
   #end
+
+  function anyStrumPressed():Bool
+  {
+    // Use playerStrumline for input checks instead of creating a new Strumline
+    if (playerStrumline.anyKeyPressed())
+    {
+      // Proceed with your logic for player strumline input
+      return true;
+    }
+    if (opponentStrumline.anyKeyPressed())
+    {
+      // Proceed with your logic for opponent strumline input
+      return true;
+    }
+    return false;
+  }
 }

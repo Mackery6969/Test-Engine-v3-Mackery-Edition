@@ -94,7 +94,6 @@ class Save
           // Reasonable defaults.
           framerate: 60,
           naughtyness: true,
-          ghostTapping: true,
           downscroll: false,
           flashingLights: true,
           zoomCamera: true,
@@ -103,6 +102,9 @@ class Save
           inputOffset: 0,
           audioVisualOffset: 0,
           unlockedFramerate: false,
+
+          ghostTapping: true,
+          oldScoreText: false,
 
           controls:
             {
@@ -1283,12 +1285,6 @@ typedef SaveDataOptions =
   var naughtyness:Bool;
 
   /**
-   * No penalty for pressing a note when none is there
-   * @default 'true'
-   */
-  var ghostTapping:Bool;
-
-  /**
    * If enabled, the strumline is at the bottom of the screen rather than the top.
    * @default `false`
    */
@@ -1335,6 +1331,18 @@ typedef SaveDataOptions =
    * @default `false`
    */
   var unlockedFramerate:Bool;
+
+  /**
+   * No penalty for pressing a note when none is there
+   * @default 'true'
+   */
+  var ghostTapping:Bool;
+
+  /**
+   * Original Friday Night Funkin' Score Text below the heath bar.
+   * @default 'false'
+   */
+  var oldScoreText:Bool;
 
   var controls:
     {

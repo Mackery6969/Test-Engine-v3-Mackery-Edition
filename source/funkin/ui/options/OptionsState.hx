@@ -14,6 +14,7 @@ import funkin.graphics.shaders.HSVShader;
 import funkin.util.WindowUtil;
 import funkin.audio.FunkinSound;
 import funkin.input.Controls;
+import funkin.ui.options.EngineOptionsMenu;
 
 class OptionsState extends MusicBeatState
 {
@@ -43,6 +44,7 @@ class OptionsState extends MusicBeatState
 
     var options = addPage(Options, new OptionsMenu());
     var preferences = addPage(Preferences, new PreferencesMenu());
+    var engineOptions = addPage(EngineOptions, new EngineOptionsMenu());
     var controls = addPage(Controls, new ControlsMenu());
 
     if (options.hasMultipleOptions())
@@ -50,6 +52,7 @@ class OptionsState extends MusicBeatState
       options.onExit.add(exitToMainMenu);
       controls.onExit.add(exitControls);
       preferences.onExit.add(switchPage.bind(Options));
+      engineOptions.onExit.add(switchPage.bind(Options));
     }
     else
     {
@@ -184,6 +187,7 @@ class OptionsMenu extends Page
 
     add(items = new TextMenuList());
     createItem("PREFERENCES", function() switchPage(Preferences));
+    createItem("ENGINE OPTIONS", function() switchPage(EngineOptions));
     createItem("CONTROLS", function() switchPage(Controls));
     createItem("INPUT OFFSETS", function() {
       #if web
@@ -271,4 +275,5 @@ enum abstract PageName(String)
   var Colors = "colors";
   var Mods = "mods";
   var Preferences = "preferences";
+  var EngineOptions = "engine options";
 }

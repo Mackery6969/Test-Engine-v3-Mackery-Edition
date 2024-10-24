@@ -334,6 +334,19 @@ class Constants
   public static final HIT_WINDOW_MS:Float = 160.0;
 
   /**
+   * Amount of damage done to the player for missing on a hold note
+   */
+  public static final GRADUAL_DAMAGE_PER_SECOND:Float = 2.0 / 100.0 * HEALTH_MAX; // 2.0%; Adjust as necessary
+
+  /**
+   * the game denies to drain health on gdps for sustain notes that are too short
+   */
+  public static final SHORT_SUSTAIN_THRESHOLD:Int = 120; // Adjust as necessary (in milliseconds)
+
+  public static final HIT_WINDOW_MS_HEAD:Float = 160.0; // Adjust this value as needed for head notes
+  public static final HIT_WINDOW_MS_TAIL:Float = 100.0; // Adjust this value as needed for tail notes
+
+  /**
    * Constant for the number of seconds in a minute.
    *
    * sex per min

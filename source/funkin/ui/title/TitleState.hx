@@ -465,7 +465,7 @@ class TitleState extends MusicBeatState
           switch (i + 1)
           {
             case 1:
-              createCoolText(['The', 'Funkin Crew Inc']);
+              createCoolText(['The', 'Mackery Crew Inc']);
             case 3:
               addMoreText('presents');
             case 4:

@@ -30,7 +30,7 @@ class Project extends HXProject {
 	/**
 	 * The game's name. Used as the default window title.
 	 */
-	static final TITLE:String = "Friday Night Funkin' Test Engine'";
+	static final TITLE:String = "Friday Night Funkin' - Test Engine";
 
 	/**
 	 * The name of the generated executable file.

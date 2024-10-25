@@ -1609,7 +1609,15 @@ class PlayState extends MusicBeatSubState
     infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
     infoText.scrollFactor.set();
     infoText.zIndex = 802;
-    if (!Preferences.oldScoreText) infoText.screenCenter(X);
+    if (!Preferences.oldScoreText)
+    {
+      infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+      infoText.screenCenter(X);
+    }
+    else
+    {
+      infoText.x = healthBarBG.x + healthBarBG.width - 190;
+    }
     add(infoText);
 
     // Move the health bar to the HUD camera.
@@ -2148,6 +2156,11 @@ class PlayState extends MusicBeatSubState
      */
   function updateInfoText():Void
   {
+    if (!Preferences.oldScoreText)
+    {
+      infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+      infoText.screenCenter(X);
+    }
     // TODO: Add functionality for modules to update the score text.
     if (isBotPlayMode)
     {
@@ -2155,12 +2168,12 @@ class PlayState extends MusicBeatSubState
     }
     else
     {
-      var misses = Highscore.tallies.missed;
+      var misses:Int = Highscore.tallies.missed;
       // TODO: Add an option for this maybe?
       var commaSeparated:Bool = true;
       if (!Preferences.oldScoreText)
       {
-        if (misses == 0)
+        if (misses == 0 && Highscore.tallies.totalNotesHit > 0)
         {
           infoText.text = ' | Score: '
             + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
@@ -2195,7 +2208,8 @@ class PlayState extends MusicBeatSubState
 
     if (totalNotes > 0)
     {
-      return (Math.round((notesHit / totalNotes) * 100) / 100) + '%';
+      var percentage = (notesHit / totalNotes) * 100;
+      return (Math.ceil(percentage * 100) / 100) + '%'; // Rounds up to 2 decimal points
     }
     else
     {
@@ -2608,10 +2622,7 @@ class PlayState extends MusicBeatSubState
 
     if (event.doesNotesplash) playerStrumline.playNoteSplash(note.noteData.getDirection());
 
-    if (note.isHoldNote && note.holdNoteSprite != null)
-    {
-      playerStrumline.playNoteHoldCover(note.holdNoteSprite);
-    }
+    if (event.doesNotesplash && note.isHoldNote && note.holdNoteSprite != null) playerStrumline.playNoteHoldCover(note.holdNoteSprite);
 
     applyScore(event.score, event.judgement, event.healthChange, event.isComboBreak);
     popUpScore(event.judgement);

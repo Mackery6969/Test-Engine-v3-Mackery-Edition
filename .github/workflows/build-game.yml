@@ -1,4 +1,4 @@
-name: Build and Upload nightly game builds
+name: Build and Upload Nightly Game Builds
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
         default: "-DGITHUB_BUILD"
       save-artifact:
         type: boolean
-        description: Save the build artifact to Github Actions (sends to itch otherwise)
+        description: Save the build artifact to Github Actions
         default: true
   push:
     paths-ignore:
@@ -32,25 +32,14 @@ jobs:
       - name: Make git happy
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
-      - name: Get checkout token
-        uses: actions/create-github-app-token@v1
-        id: app_token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PEM }}
-          owner: ${{ github.repository_owner }}
-
       - name: Checkout repo
-        uses: funkincrew/ci-checkout@v6
+        uses: actions/checkout@v3
         with:
-          submodules: "recursive"
-          token: ${{ steps.app_token.outputs.token }}
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
 
       - name: Setup build environment
         uses: ./.github/actions/setup-haxe
-        with:
-          gh-token: ${{ steps.app_token.outputs.token }}
 
       - name: Setup HXCPP dev commit
         run: |
@@ -59,12 +48,12 @@ jobs:
           cd ../../../../..
 
       - name: Build game (Windows)
-        if: ${{ matrix.target == 'windows' }}
+        if: ${{ matrix.target == 'windows-latest' }}
         run: haxelib run lime build windows -v -release "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Build game (Other targets)
-        if: ${{ matrix.target != 'windows' }}
+        if: ${{ matrix.target != 'windows-latest' }}
         run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
@@ -76,7 +65,7 @@ jobs:
           path: export/release/${{ matrix.target }}/bin/
 
   build-game-in-container:
-    runs-on: build-set
+    runs-on: ubuntu-latest
     container: ghcr.io/mackery6969/build-dependencies:latest
     strategy:
       matrix:
@@ -88,20 +77,11 @@ jobs:
         shell: bash
 
     steps:
-      - name: Get checkout token
-        uses: actions/create-github-app-token@v1
-        id: app_token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PEM }}
-          owner: ${{ github.repository_owner }}
-
       - name: Checkout repo
-        uses: funkincrew/ci-checkout@v6
+        uses: actions/checkout@v3
         with:
-          submodules: "recursive"
-          token: ${{ steps.app_token.outputs.token }}
-          persist-credentials: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: recursive
 
       - name: Config haxelib
         run: |
@@ -110,7 +90,7 @@ jobs:
 
       - name: Restore cached dependencies
         id: cache-hmm
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: .haxelib
           key: haxe-hmm-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
@@ -118,14 +98,14 @@ jobs:
       - name: Install dependencies if not cached
         if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
         run: |
-          git config --global 'url.https://x-access-token:${{ steps.app_token.outputs.token }}@github.com/.insteadOf' https://github.com/
+          git config --global 'url.https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/.insteadOf' https://github.com/
           git config --global advice.detachedHead false
           haxelib --global run hmm install -q
           cd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml
 
       - name: Restore hxcpp cache (Non-HTML5)
         if: ${{ matrix.target != 'html5' }}
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /usr/share/hxcpp
           key: haxe-hxcpp-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}

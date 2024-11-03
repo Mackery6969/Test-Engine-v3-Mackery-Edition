@@ -1,4 +1,4 @@
-name: Build and Upload Nightly Game Builds
+name: Build Game
 
 on:
   workflow_dispatch:

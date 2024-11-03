@@ -50,7 +50,7 @@ class PauseSubState extends MusicBeatSubState
     {text: 'Resume', callback: resume},
     {text: 'Restart Song', callback: restartPlayState},
     {text: 'Change Difficulty', callback: switchMode.bind(_, Difficulty)},
-    {text: 'Enable Practice Mode', callback: enablePracticeMode, filter: () -> !(PlayState.instance?.isPracticeMode ?? false)},
+    // {text: 'Enable Practice Mode', callback: enablePracticeMode, filter: () -> !(PlayState.instance?.isPracticeMode ?? false)},
     {text: 'Exit to Menu', callback: quitToMenu},
   ];
 
@@ -672,14 +672,15 @@ class PauseSubState extends MusicBeatSubState
    * Force the game into practice mode, then update the pause menu.
    * @param state The current PauseSubState.
    */
-  static function enablePracticeMode(state:PauseSubState):Void
-  {
-    if (PlayState.instance == null) return;
+  /*
+    static function enablePracticeMode(state:PauseSubState):Void
+    {
+      if (PlayState.instance == null) return;
 
-    PlayState.instance.isPracticeMode = true;
-    state.regenerateMenu();
-  }
-
+      PlayState.instance.isPracticeMode = true;
+      state.regenerateMenu();
+    }
+   */
   /**
    * Restart the paused video cutscene, then resume the game.
    * @param state The current PauseSubState.

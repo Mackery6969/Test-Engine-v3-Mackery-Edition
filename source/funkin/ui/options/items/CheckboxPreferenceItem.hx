@@ -5,10 +5,13 @@ import flixel.FlxSprite.FlxSprite;
 class CheckboxPreferenceItem extends FlxSprite
 {
   public var currentValue(default, set):Bool;
+  public var label:String; // Add a label property to identify this preference
 
-  public function new(x:Float, y:Float, defaultValue:Bool = false)
+  public function new(x:Float, y:Float, defaultValue:Bool = false, label:String)
   {
     super(x, y);
+
+    this.label = label; // Set the label
 
     frames = Paths.getSparrowAtlas('checkboxThingie');
     animation.addByPrefix('static', 'Check Box unselected', 24, false);

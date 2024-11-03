@@ -4,6 +4,7 @@ import flixel.system.FlxBasePreloader;
 import flixel.util.FlxColor;
 import funkin.data.song.SongData.SongTimeFormat;
 import lime.app.Application;
+import funkin.ui.freeplay.SongLaunchState;
 
 /**
  * A store of unchanging, globally relevant values.
@@ -439,53 +440,53 @@ class Constants
   /**
    * The amount of health the player gains when hitting a note with the KILLER rating.
    */
-  public static final HEALTH_KILLER_BONUS:Float = 2.0 / 100.0 * HEALTH_MAX; // +2.0%
+  public static final HEALTH_KILLER_BONUS:Float = (2.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // +2.0%
 
   /**
    * The amount of health the player gains when hitting a note with the SICK rating.
    */
-  public static final HEALTH_SICK_BONUS:Float = 1.5 / 100.0 * HEALTH_MAX; // +1.0%
+  public static final HEALTH_SICK_BONUS:Float = (1.5 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // +1.0%
 
   /**
    * The amount of health the player gains when hitting a note with the GOOD rating.
    */
-  public static final HEALTH_GOOD_BONUS:Float = 0.75 / 100.0 * HEALTH_MAX; // +0.75%
+  public static final HEALTH_GOOD_BONUS:Float = (0.75 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // +0.75%
 
   /**
    * The amount of health the player gains when hitting a note with the BAD rating.
    */
-  public static final HEALTH_BAD_BONUS:Float = 0.0 / 100.0 * HEALTH_MAX; // +0.0%
+  public static final HEALTH_BAD_BONUS:Float = (0.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // +0.0%
 
   /**
    * The amount of health the player gains when hitting a note with the SHIT rating.
    * If negative, the player will actually lose health.
    */
-  public static final HEALTH_SHIT_BONUS:Float = -1.0 / 100.0 * HEALTH_MAX; // -1.0%
+  public static final HEALTH_SHIT_BONUS:Float = (-1.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // -1.0%
 
   /**
    * The amount of health the player gains, while holding a hold note, per second.
    */
-  public static final HEALTH_HOLD_BONUS_PER_SECOND:Float = 7.5 / 100.0 * HEALTH_MAX; // +7.5% / second
+  public static final HEALTH_HOLD_BONUS_PER_SECOND:Float = (7.5 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // +7.5% / second
 
   /**
    * The amount of health the player loses upon missing a note.
    */
-  public static final HEALTH_MISS_PENALTY:Float = 4.0 / 100.0 * HEALTH_MAX; // 4.0%
+  public static final HEALTH_MISS_PENALTY:Float = (4.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthLoss; // 4.0%
 
   /**
    * The amount of health the player loses upon pressing a key when no note is there.
    */
-  public static final HEALTH_GHOST_MISS_PENALTY:Float = 2.0 / 100.0 * HEALTH_MAX; // 2.0%
+  public static final HEALTH_GHOST_MISS_PENALTY:Float = (2.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthLoss; // 2.0%
 
   /**
    * The amount of health the player loses upon letting go of a hold note while it is still going.
    */
-  public static final HEALTH_HOLD_DROP_PENALTY:Float = 0.0; // 0.0%
+  public static final HEALTH_HOLD_DROP_PENALTY:Float = (1.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthLoss; // 1.0%
 
   /**
    * The amount of health the player loses upon hitting a mine.
    */
-  public static final HEALTH_MINE_PENALTY:Float = 15.0 / 100.0 * HEALTH_MAX; // 15.0%
+  public static final HEALTH_MINE_PENALTY:Float = (15.0 / 100.0 * HEALTH_MAX) * SongLaunchState.healthGain; // 15.0%
 
   /**
    * SCORE VALUES

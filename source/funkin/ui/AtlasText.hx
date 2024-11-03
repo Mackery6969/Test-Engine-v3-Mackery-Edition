@@ -43,7 +43,7 @@ class AtlasText extends FlxTypedSpriteGroup<AtlasChar>
     this.text = text;
   }
 
-  function set_text(value:String)
+  public function set_text(value:String)
   {
     if (value == null) value = "";
 

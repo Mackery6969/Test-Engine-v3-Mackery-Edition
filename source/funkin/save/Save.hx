@@ -105,6 +105,8 @@ class Save
 
           ghostTapping: true,
           oldScoreText: false,
+          instrumentalSelect: false,
+          songLaunchScreen: true,
 
           controls:
             {
@@ -1337,6 +1339,18 @@ typedef SaveDataOptions =
    * @default 'true'
    */
   var ghostTapping:Bool;
+
+  /**
+   * Allows you to select a different instrumental (in old vers it defaulted to true which was VERY annoying)
+   * @default 'false'
+   */
+  var instrumentalSelect:Bool;
+
+  /**
+   * allows the user to select modifiers.
+   * @default 'true'
+   */
+  var songLaunchScreen:Bool;
 
   /**
    * Original Friday Night Funkin' Score Text below the heath bar.

@@ -219,6 +219,44 @@ class Preferences
   }
 
   /**
+   * Allows you to select a different instrumental (in old vers it defaulted to true which was VERY annoying)
+   * @default 'false'
+   */
+  public static var instrumentalSelect(get, set):Bool;
+
+  static function get_instrumentalSelect():Bool
+  {
+    return Save?.instance?.options?.instrumentalSelect;
+  }
+
+  static function set_instrumentalSelect(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.instrumentalSelect = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * allows the user to select modifiers.
+   * @default 'true'
+   */
+  public static var songLaunchScreen(get, set):Bool;
+
+  static function get_songLaunchScreen():Bool
+  {
+    return Save?.instance?.options?.songLaunchScreen;
+  }
+
+  static function set_songLaunchScreen(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.songLaunchScreen = value;
+    save.flush();
+    return value;
+  }
+
+  /**
    * The Original Friday Night Funkin' Score text below the health bar.
    */
   public static var oldScoreText(get, set):Bool;

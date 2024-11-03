@@ -56,6 +56,7 @@ import funkin.play.stage.Stage;
 import funkin.save.Save;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.stage.StageOffsetSubState;
+import funkin.ui.freeplay.SongLaunchState;
 import funkin.ui.mainmenu.MainMenuState;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.options.PreferencesMenu;
@@ -2402,7 +2403,7 @@ class PlayState extends MusicBeatSubState
       // Handle missed note logic
       if (note.hasMissed && !note.handledMiss)
       {
-        var event:NoteScriptEvent = new NoteScriptEvent(NOTE_MISS, note, -Constants.HEALTH_MISS_PENALTY, 0, true);
+        var event:NoteScriptEvent = new NoteScriptEvent(NOTE_MISS, note, -Constants.HEALTH_MISS_PENALTY * SongLaunchState.healthLoss, 0, true);
         dispatchEvent(event);
         if (event.eventCanceled) continue;
 
@@ -2669,6 +2670,11 @@ class PlayState extends MusicBeatSubState
             l: 20
           });
       }
+    }
+    if (SongLaunchState.lossOnComboLoss)
+    {
+      health -= 9999; // instakill!!
+      trace("You Lost!");
     }
 
     vocals.playerVolume = 0;
@@ -3001,7 +3007,7 @@ class PlayState extends MusicBeatSubState
     var isNewHighscore = false;
     var prevScoreData:Null<SaveScoreData> = Save.instance.getSongScore(currentSong.id, suffixedDifficulty);
 
-    if (currentSong != null && currentSong.validScore)
+    if (currentSong != null && currentSong.validScore && SongLaunchState.saveScore)
     {
       // crackhead double thingie, sets whether was new highscore, AND saves the song!
       var data =

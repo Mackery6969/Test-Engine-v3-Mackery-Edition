@@ -61,6 +61,15 @@ class EngineOptionsMenu extends Page
       'Toggles the use of the original score text in Friday Night Funkin\', the engine revamps how it works when disabled.', function(value:Bool):Void {
         Preferences.oldScoreText = value;
     }, Preferences.oldScoreText);
+    createPrefItemCheckbox('Instrumental Selector',
+      '(Only works if you have Pico unlocked.) if enabled it will let you select what Instrumental on a song you want.', function(value:Bool):Void {
+        Preferences.instrumentalSelect = value;
+    }, Preferences.instrumentalSelect);
+    createPrefItemCheckbox('Song Modifier Select',
+      'Opens a menu upon song select allowing you to choose modifiers (having a modifier will most likely disable highscore, you can check if so by the "*" at the end of the name) if enabled',
+      function(value:Bool):Void {
+        Preferences.songLaunchScreen = value;
+      }, Preferences.songLaunchScreen);
   }
 
   override function update(elapsed:Float):Void
@@ -104,7 +113,7 @@ class EngineOptionsMenu extends Page
    */
   function createPrefItemCheckbox(prefName:String, prefDesc:String, onChange:Bool->Void, defaultValue:Bool):Void
   {
-    var checkbox:CheckboxPreferenceItem = new CheckboxPreferenceItem(0, 120 * (items.length - 1 + 1), defaultValue);
+    var checkbox:CheckboxPreferenceItem = new CheckboxPreferenceItem(0, 120 * (items.length - 1 + 1), defaultValue, prefName);
 
     items.createItem(0, (120 * items.length) + 30, prefName, AtlasFont.BOLD, function() {
       var value = !checkbox.currentValue;

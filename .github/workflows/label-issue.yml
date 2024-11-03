@@ -19,11 +19,11 @@ jobs:
           # Issue title filter work with anymatch https://www.npmjs.com/package/anymatch.
           # Any matched issue will stop detection immediately.
           # You can specify multi filters in each line.
-          filter: ''
+          filter: ""
           # Exclude keywords in title before detecting.
-          exclude: ''
+          exclude: ""
           # Label to set, when potential duplicates are detected.
-          label: 'potential duplicate'
+          label: "potential duplicate"
           # Get issues with state to compare. Supported state: 'all', 'closed', 'open'.
           state: all
           # If similarity is higher than this threshold([0,1]), issue will be marked as duplicate.
@@ -43,10 +43,10 @@ jobs:
     name: Close empty issues
     runs-on: ubuntu-latest
     steps:
-    - name: Run empty issues closer action
-      uses: rickstaa/empty-issues-closer-action@v1
-      env:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        close_comment: Closing this issue because it appears to be empty. Please update the issue for it to be reopened.
-        open_comment: Reopening this issue because the author provided more information.
+      - name: Run empty issues closer action
+        uses: rickstaa/empty-issues-closer-action@v1
+        env:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          close_comment: Closing this issue because it appears to be empty. Please update the issue for it to be reopened.
+          open_comment: Reopening this issue because the author provided more information.

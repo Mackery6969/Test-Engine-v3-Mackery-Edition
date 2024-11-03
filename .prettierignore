@@ -2,12 +2,25 @@
 export
 
 # Ignore all JSONS in the images folder (including FlxAnimate JSONs)
-assets/preload/images
-assets/shared/images
-assets/weekend1/images
+# assets/preload/images
+# assets/shared/images
+# assets/weekend1/images
 
 # Don't ignore data files
 # TODO: These don't work.
 !assets/preload/data/
 
 assets/exclude/data/credits.json
+
+# file types
+*.mp3
+*.mp4
+*.png
+*.fla
+*.ogg
+*.ttf
+*.TTF
+*.psd
+
+# prettier cant handle hx files :/
+*.hx

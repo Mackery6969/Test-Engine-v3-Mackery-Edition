@@ -1,21 +1,52 @@
 /**
- * Configuration for JSON file formatting.
+ * Configuration for formatting multiple file types.
  */
 module.exports = {
-  // Line width before Prettier tries to add new lines.
   printWidth: 80,
-
-	// Indent with 2 spaces.
-	tabs: false,
-  useTabs: false,
   tabWidth: 2,
-
-  // Use double quotes.
+  useTabs: false,
   singleQuote: false,
   quoteProps: "preserve",
-  parser: "json",
+  bracketSpacing: true,
+  trailingComma: "none",
+  semi: false,
+  plugins: ["prettier-plugin-xml"], // Explicitly add the XML plugin
 
-  bracketSpacing: true, // Spacing between brackets in object literals.
-  trailingComma: "none", // No trailing commas.
-  semi: false, // No semicolons at ends of statements.
-};
+  overrides: [
+    {
+      files: "*.json",
+      options: {
+        parser: "json"
+      }
+    },
+    {
+      files: "*.md",
+      options: {
+        parser: "markdown",
+        proseWrap: "always"
+      }
+    },
+    {
+      files: "*.txt",
+      options: {
+        printWidth: 80,
+        proseWrap: "preserve"
+      }
+    },
+    {
+      files: "*.hxml",
+      options: {
+        parser: "babel",
+        singleQuote: true
+      }
+    },
+    {
+      files: "*.xml",
+      options: {
+        parser: "xml",
+        bracketSpacing: true,
+        singleQuote: true
+      }
+    }
+  ]
+}

@@ -21,8 +21,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: windows
-          - target: macos
+          - target: windows-latest
+          - target: macos-latest
     runs-on: ${{ matrix.target }}
     defaults:
       run:

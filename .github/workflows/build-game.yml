@@ -70,17 +70,10 @@ jobs:
 
       - name: Save build artifact to Github Actions
         if: ${{ github.event.inputs.save-artifact }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build-${{ matrix.target }}
           path: export/release/${{ matrix.target }}/bin/
-
-      - name: Upload build to itch.io
-        if: ${{ !github.event.inputs.save-artifact }}
-        uses: ./.github/actions/upload-itch
-        with:
-          butler-key: ${{ secrets.BUTLER_API_KEY }}
-          target: ${{ matrix.target }}
 
   build-game-in-container:
     runs-on: build-set

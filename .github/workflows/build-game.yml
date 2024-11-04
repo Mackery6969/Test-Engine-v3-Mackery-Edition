@@ -38,6 +38,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
+      - name: Set up haxelib to use local .haxelib folder
+        run: echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
+
       - name: Install Haxe on macOS
         if: ${{ matrix.target == 'macos-latest' }}
         run: |
@@ -46,31 +49,17 @@ jobs:
           echo "/opt/homebrew/bin" >> $GITHUB_PATH   # Add Haxe to PATH
           echo "HAXE_STD_PATH=/opt/homebrew/lib/haxe/std" >> $GITHUB_ENV  # Set HAXE_STD_PATH
 
-      - name: Setup haxelib (macOS)
-        if: ${{ matrix.target == 'macos-latest' }}
-        run: |
-          # Run haxelib setup with a default path
-          mkdir -p ~/.haxelib
-          echo "~/.haxelib" | haxelib setup
-
       - name: Install Haxe on Windows
         if: ${{ matrix.target == 'windows-latest' }}
         run: |
           choco install haxe -y
           echo "C:/ProgramData/chocolatey/lib/haxe/tools/haxe" >> $GITHUB_PATH  # Add Haxe to PATH
 
-      - name: Setup build environment
-        env:
-          HXCPP_COMPILE_SKIP_PROMPT: "1"
+      - name: Setup HXCPP dev commit
         run: |
-          # Ensure hxcpp is installed
-          if ! haxelib list | grep -q 'hxcpp'; then
-            haxelib install hxcpp
-          fi
-
           # Pre-build hxcpp if directory exists
-          if [ -d ".haxelib/hxcpp/git/tools/hxcpp" ]; then
-            cd .haxelib/hxcpp/git/tools/hxcpp
+          if [ -d "$GITHUB_WORKSPACE/.haxelib/hxcpp/git/tools/hxcpp" ]; then
+            cd $GITHUB_WORKSPACE/.haxelib/hxcpp/git/tools/hxcpp
             haxe compile.hxml
             cd ../../../../..
           fi
@@ -111,40 +100,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Config haxelib
-        env:
-          HXCPP_COMPILE_SKIP_PROMPT: "1"
-        run: |
-          haxelib --never newrepo
-          echo "HAXEPATH=$(haxelib config)" >> "$GITHUB_ENV"
-
-          # Ensure hxcpp is installed
-          if ! haxelib list | grep -q 'hxcpp'; then
-            haxelib install hxcpp
-          fi
-
-          # Pre-build hxcpp if directory exists
-          if [ -d ".haxelib/hxcpp/git/tools/hxcpp" ]; then
-            cd .haxelib/hxcpp/git/tools/hxcpp
-            haxe compile.hxml
-            cd ../../../../..
-          fi
-
-      - name: Restore cached dependencies
-        id: cache-hmm
-        uses: actions/cache@v3
-        with:
-          path: .haxelib
-          key: haxe-hmm-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
-          restore-keys: |
-            haxe-hmm-${{ runner.os }}-
-
-      - name: Install dependencies if not cached
-        if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
-        run: |
-          git config --global 'url.https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/.insteadOf' https://github.com/
-          git config --global advice.detachedHead false
-          haxelib --global run hmm install -q
+      - name: Set up haxelib to use local .haxelib folder
+        run: echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
 
       - name: Build game
         run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"

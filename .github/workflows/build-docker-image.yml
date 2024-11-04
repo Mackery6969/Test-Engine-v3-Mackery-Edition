@@ -56,5 +56,5 @@ jobs:
             org.opencontainers.image.title=${{ github.repository_owner }}/build-dependencies
             org.opencontainers.image.url=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ github.sha }}
-          cache-from: type=local,source=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache,mode=max

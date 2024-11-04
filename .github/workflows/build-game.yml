@@ -60,6 +60,12 @@ jobs:
             echo "Error: haxelib not found in PATH" && exit 1
           fi
 
+      - name: Install lime if missing
+        run: |
+          if ! haxelib list | grep -q 'lime'; then
+            haxelib install lime
+          fi
+
       - name: Setup HXCPP dev commit
         run: |
           # Pre-build hxcpp if directory exists
@@ -107,6 +113,12 @@ jobs:
 
       - name: Ensure haxelib uses local .haxelib folder
         run: echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
+
+      - name: Install lime if missing
+        run: |
+          if ! haxelib list | grep -q 'lime'; then
+            haxelib install lime
+          fi
 
       - name: Build game
         run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"

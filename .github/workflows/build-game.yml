@@ -46,6 +46,13 @@ jobs:
           echo "/opt/homebrew/bin" >> $GITHUB_PATH   # Add Haxe to PATH
           echo "HAXE_STD_PATH=/opt/homebrew/lib/haxe/std" >> $GITHUB_ENV  # Set HAXE_STD_PATH
 
+      - name: Setup haxelib (macOS)
+        if: ${{ matrix.target == 'macos-latest' }}
+        run: |
+          # Run haxelib setup with a default path
+          mkdir -p ~/.haxelib
+          echo "~/.haxelib" | haxelib setup
+
       - name: Install Haxe on Windows
         if: ${{ matrix.target == 'windows-latest' }}
         run: |

@@ -43,13 +43,14 @@ jobs:
         run: |
           brew update
           brew install haxe
-          echo "::add-path::$(brew --prefix)/bin"  # Ensure haxe and haxelib are in PATH
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH   # Add Haxe to PATH
+          echo "HAXE_STD_PATH=/opt/homebrew/lib/haxe/std" >> $GITHUB_ENV  # Set HAXE_STD_PATH
 
       - name: Install Haxe on Windows
         if: ${{ matrix.target == 'windows-latest' }}
         run: |
           choco install haxe -y
-          echo "::add-path::C:/ProgramData/chocolatey/lib/haxe/tools/haxe"  # Update PATH for haxe and haxelib
+          echo "C:/ProgramData/chocolatey/lib/haxe/tools/haxe" >> $GITHUB_PATH  # Add Haxe to PATH
 
       - name: Setup build environment
         env:

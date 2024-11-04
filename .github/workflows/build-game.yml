@@ -38,9 +38,16 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
+      - name: Install Haxe on macOS
+        if: ${{ matrix.target == 'macos-latest' }}
+        run: |
+          brew update
+          brew install haxe
+          echo "::add-path::$(brew --prefix)/bin"  # Ensure haxe and haxelib are in PATH
+
       - name: Setup build environment
         env:
-          HAXE_STD_PATH: /usr/local/lib/haxe/std  # Adjust for macOS
+          HAXE_STD_PATH: /usr/local/lib/haxe/std  # Adjust for macOS if needed
           HXCPP_COMPILE_SKIP_PROMPT: "1"
         run: |
           # Ensure hxcpp is installed

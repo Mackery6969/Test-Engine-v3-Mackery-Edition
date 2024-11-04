@@ -41,7 +41,16 @@ jobs:
       - name: Setup build environment
         uses: ./.github/actions/setup-haxe
 
-      - name: Setup HXCPP dev commit
+      - name: Restore haxelib cache
+        uses: actions/cache@v3
+        with:
+          path: .haxelib
+          key: haxe-haxelib-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
+          restore-keys: |
+            haxe-haxelib-${{ runner.os }}-
+
+      - name: Setup HXCPP dev commit (Compile only if cache miss)
+        if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
         run: |
           cd .haxelib/hxcpp/git/tools/hxcpp
           haxe compile.hxml
@@ -94,6 +103,8 @@ jobs:
         with:
           path: .haxelib
           key: haxe-hmm-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
+          restore-keys: |
+            haxe-hmm-${{ runner.os }}-
 
       - name: Install dependencies if not cached
         if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
@@ -109,7 +120,8 @@ jobs:
         with:
           path: /usr/share/hxcpp
           key: haxe-hxcpp-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: haxe-hxcpp-${{ runner.os }}-${{ github.ref_name }}
+          restore-keys: |
+            haxe-hxcpp-${{ runner.os }}-
 
       - name: Build game
         run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"

@@ -27,6 +27,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: docker-layer-cache-${{ github.ref }}-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            docker-layer-cache-${{ github.ref }}-
+            docker-layer-cache-
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5.3.0
         with:
@@ -42,3 +51,5 @@ jobs:
             org.opencontainers.image.title=${{ github.repository_owner }}/build-dependencies
             org.opencontainers.image.url=https://github.com/${{ github.repository }}
             org.opencontainers.image.version=${{ github.sha }}
+          cache-from: type=local,source=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max

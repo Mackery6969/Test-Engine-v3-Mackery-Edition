@@ -38,9 +38,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Set up haxelib to use local .haxelib folder
-        run: echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
-
       - name: Install Haxe on macOS
         if: ${{ matrix.target == 'macos-latest' }}
         run: |
@@ -54,6 +51,14 @@ jobs:
         run: |
           choco install haxe -y
           echo "C:/ProgramData/chocolatey/lib/haxe/tools/haxe" >> $GITHUB_PATH  # Add Haxe to PATH
+
+      - name: Ensure haxelib uses local .haxelib folder
+        run: |
+          if command -v haxelib > /dev/null; then
+            echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
+          else
+            echo "Error: haxelib not found in PATH" && exit 1
+          fi
 
       - name: Setup HXCPP dev commit
         run: |
@@ -100,7 +105,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Set up haxelib to use local .haxelib folder
+      - name: Ensure haxelib uses local .haxelib folder
         run: echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
 
       - name: Build game

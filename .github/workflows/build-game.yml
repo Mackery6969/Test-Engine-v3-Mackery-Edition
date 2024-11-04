@@ -40,13 +40,20 @@ jobs:
 
       - name: Setup build environment
         env:
-          HAXE_STD_PATH: /c/hostedtoolcache/windows/haxe/4.3.4/x64
+          HAXE_STD_PATH: /usr/local/lib/haxe/std  # Adjust for macOS
           HXCPP_COMPILE_SKIP_PROMPT: "1"
         run: |
-          # Pre-build hxcpp to avoid interactive prompt
-          cd .haxelib/hxcpp/git/tools/hxcpp
-          haxe compile.hxml
-          cd ../../../../..
+          # Ensure hxcpp is installed
+          if ! haxelib list | grep -q 'hxcpp'; then
+            haxelib install hxcpp
+          fi
+
+          # Pre-build hxcpp if directory exists
+          if [ -d ".haxelib/hxcpp/git/tools/hxcpp" ]; then
+            cd .haxelib/hxcpp/git/tools/hxcpp
+            haxe compile.hxml
+            cd ../../../../..
+          fi
 
       - name: Build game (Windows)
         if: ${{ matrix.target == 'windows-latest' }}
@@ -90,10 +97,18 @@ jobs:
         run: |
           haxelib --never newrepo
           echo "HAXEPATH=$(haxelib config)" >> "$GITHUB_ENV"
-          # Pre-build hxcpp for non-interactive setup
-          cd .haxelib/hxcpp/git/tools/hxcpp
-          haxe compile.hxml
-          cd ../../../../..
+
+          # Ensure hxcpp is installed
+          if ! haxelib list | grep -q 'hxcpp'; then
+            haxelib install hxcpp
+          fi
+
+          # Pre-build hxcpp if directory exists
+          if [ -d ".haxelib/hxcpp/git/tools/hxcpp" ]; then
+            cd .haxelib/hxcpp/git/tools/hxcpp
+            haxe compile.hxml
+            cd ../../../../..
+          fi
 
       - name: Restore cached dependencies
         id: cache-hmm

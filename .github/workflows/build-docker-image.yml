@@ -40,7 +40,6 @@ jobs:
           restore-keys: |
             docker-layer-cache-${{ github.ref }}-
             docker-layer-cache-
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5.3.0
         with:

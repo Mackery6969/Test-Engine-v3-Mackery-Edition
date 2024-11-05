@@ -38,51 +38,32 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Install Haxe on macOS
-        if: ${{ matrix.target == 'macos-latest' }}
-        run: |
-          brew update
-          brew install haxe
-          echo "/opt/homebrew/bin" >> $GITHUB_PATH   # Add Haxe to PATH
-          echo "HAXE_STD_PATH=/opt/homebrew/lib/haxe/std" >> $GITHUB_ENV  # Set HAXE_STD_PATH
+      - name: Setup build environment
+        uses: ./.github/actions/setup-haxe
 
-      - name: Install Haxe on Windows
-        if: ${{ matrix.target == 'windows-latest' }}
-        run: |
-          choco install haxe -y
-          echo "C:/ProgramData/chocolatey/lib/haxe/tools/haxe" >> $GITHUB_PATH  # Add Haxe to PATH
+      - name: Restore haxelib cache
+        uses: actions/cache@v3
+        with:
+          path: .haxelib
+          key: haxe-haxelib-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
+          restore-keys: |
+            haxe-haxelib-${{ runner.os }}-
 
-      - name: Ensure haxelib uses local .haxelib folder
+      - name: Setup HXCPP dev commit (Compile only if cache miss)
+        if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
         run: |
-          if command -v haxelib > /dev/null; then
-            echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
-          else
-            echo "Error: haxelib not found in PATH" && exit 1
-          fi
-
-      - name: Install lime if missing
-        run: |
-          if ! haxelib list | grep -q 'lime'; then
-            haxelib install lime
-          fi
-
-      - name: Setup HXCPP dev commit
-        run: |
-          # Pre-build hxcpp if directory exists
-          if [ -d "$GITHUB_WORKSPACE/.haxelib/hxcpp/git/tools/hxcpp" ]; then
-            cd $GITHUB_WORKSPACE/.haxelib/hxcpp/git/tools/hxcpp
-            haxe compile.hxml
-            cd ../../../../..
-          fi
+          cd .haxelib/hxcpp/git/tools/hxcpp
+          haxe compile.hxml
+          cd ../../../../..
 
       - name: Build game (Windows)
         if: ${{ matrix.target == 'windows-latest' }}
-        run: haxelib run lime build project.hxp windows -v -release "${{ github.event.inputs.build-defines }}"
+        run: haxelib run lime build windows -v -release "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Build game (Other targets)
         if: ${{ matrix.target != 'windows-latest' }}
-        run: haxelib run lime build project.hxp "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
+        run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Save build artifact to Github Actions
@@ -111,17 +92,39 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Ensure haxelib uses local .haxelib folder
-        run: echo "$GITHUB_WORKSPACE/.haxelib" | haxelib setup
-
-      - name: Install lime if missing
+      - name: Config haxelib
         run: |
-          if ! haxelib list | grep -q 'lime'; then
-            haxelib install lime
-          fi
+          haxelib --never newrepo
+          echo "HAXEPATH=$(haxelib config)" >> "$GITHUB_ENV"
+
+      - name: Restore cached dependencies
+        id: cache-hmm
+        uses: actions/cache@v3
+        with:
+          path: .haxelib
+          key: haxe-hmm-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
+          restore-keys: |
+            haxe-hmm-${{ runner.os }}-
+
+      - name: Install dependencies if not cached
+        if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
+        run: |
+          git config --global 'url.https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/.insteadOf' https://github.com/
+          git config --global advice.detachedHead false
+          haxelib --global run hmm install -q
+          cd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml
+
+      - name: Restore hxcpp cache (Non-HTML5)
+        if: ${{ matrix.target != 'html5' }}
+        uses: actions/cache@v3
+        with:
+          path: /usr/share/hxcpp
+          key: haxe-hxcpp-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            haxe-hxcpp-${{ runner.os }}-
 
       - name: Build game
-        run: haxelib run lime build project.hxp "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
+        run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Save build artifact to Github Actions

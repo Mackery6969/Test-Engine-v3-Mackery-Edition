@@ -1970,7 +1970,7 @@ class FreeplayState extends MusicBeatSubState
       SongLaunchState.curVariation = currentVariation;
       SongLaunchState.curInstrumental = targetInstId;
       new FlxTimer().start(styleData?.getStartDelay(), function(tmr:FlxTimer) {
-        FunkinSound.emptyPartialQueue();
+        // FunkinSound.emptyPartialQueue();
 
         Paths.setCurrentLevel(cap?.freeplayData?.levelId);
         FlxG.switchState(() -> new SongLaunchState());

@@ -4,6 +4,7 @@ import flixel.FlxSprite;
 import funkin.graphics.FunkinCamera;
 import funkin.ui.TextMenuList.TextMenuItem;
 import funkin.audio.FunkinSound;
+import funkin.ui.options.items.ButtonPreferenceItem;
 import funkin.ui.options.items.CheckboxPreferenceItem;
 import funkin.ui.options.items.NumberPreferenceItem;
 import funkin.ui.options.items.EnumPreferenceItem;
@@ -15,7 +16,6 @@ import flixel.text.FlxText;
 import funkin.ui.transition.LoadingState;
 import funkin.ui.AtlasText.AtlasFont;
 import funkin.play.song.Song;
-import funkin.ui.mainmenu.MainMenuState;
 
 typedef DefaultPreferences =
 {
@@ -68,6 +68,8 @@ class SongLaunchState extends MusicBeatState
   var camFollow:FlxObject;
   var bg:FlxSprite;
 
+  public var isStarting:Bool = false;
+
   var metadata:FlxTypedSpriteGroup<FlxText>;
 
   public static var saveScore:Bool = true;
@@ -91,10 +93,12 @@ class SongLaunchState extends MusicBeatState
     add(items = new TextMenuList());
     add(preferenceItems = new FlxTypedSpriteGroup<FlxSprite>());
 
-    // Add "Start" as the first item
-    items.createItem(0, 120 * items.length, "Start", AtlasFont.BOLD, function() {
-      start();
-    });
+    /*
+      // Add "Start" as the first item
+      items.createItem(0, 120 * items.length, "Start", AtlasFont.BOLD, function() {
+        start();
+      });
+     */
 
     createConfItems();
 
@@ -189,6 +193,10 @@ class SongLaunchState extends MusicBeatState
    */
   function createConfItems():Void
   {
+    createConfItemButton('Start', function():Void {
+      if (!isStarting) start();
+    });
+
     createConfItemCheckbox('Practice Mode', function(value:Bool):Void {
       practice = value;
       markModifiedOptions();
@@ -262,6 +270,18 @@ class SongLaunchState extends MusicBeatState
     });
   }
 
+  function createConfItemButton(prefName:String, onClick:Void->Void):Void
+  {
+    var button:ButtonPreferenceItem = new ButtonPreferenceItem(0, (120 * (items.length - 1 + 1)), prefName);
+
+    items.createItem(0, (120 * items.length) + 30, prefName, AtlasFont.BOLD, function() {
+      onClick();
+      markModifiedOptions(); // Refresh option labels
+    });
+
+    preferenceItems.add(button);
+  }
+
   function createConfItemCheckbox(prefName:String, onChange:Bool->Void, defaultValue:Bool):Void
   {
     var checkbox:CheckboxPreferenceItem = new CheckboxPreferenceItem(0, 120 * (items.length - 1 + 1), defaultValue, prefName);
@@ -294,14 +314,14 @@ class SongLaunchState extends MusicBeatState
     var formatter = function(value:Float) {
       return '${value}%';
     };
-    var item = new NumberPreferenceItem(0, (120 * items.length) + 30, prefName, defaultValue, min, max, 5, 0, newCallback, formatter);
+    var item:NumberPreferenceItem = new NumberPreferenceItem(0, (120 * items.length) + 30, prefName, defaultValue, min, max, 5, 0, newCallback, formatter);
     items.addItem(prefName, item);
     preferenceItems.add(item.lefthandText);
   }
 
   function createConfItemEnum(prefName:String, values:Map<String, String>, onChange:String->Void, defaultValue:String):Void
   {
-    var item = new EnumPreferenceItem(0, (120 * items.length) + 30, prefName, values, defaultValue, onChange);
+    var item:EnumPreferenceItem = new EnumPreferenceItem(0, (120 * items.length) + 30, prefName, values, defaultValue, onChange);
     items.addItem(prefName, item);
     preferenceItems.add(item.lefthandText);
     markModifiedOptions(); // Update option label on creation
@@ -309,6 +329,7 @@ class SongLaunchState extends MusicBeatState
 
   function start():Void
   {
+    isStarting = true;
     FunkinSound.emptyPartialQueue();
 
     Paths.setCurrentLevel(levelId);

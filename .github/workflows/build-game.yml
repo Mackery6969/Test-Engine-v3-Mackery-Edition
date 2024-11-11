@@ -67,7 +67,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" "true" # "true" indicates GitHub Actions environment
+          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "true" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
@@ -103,7 +103,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" "true" # "true" indicates GitHub Actions environment
+          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "true" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}

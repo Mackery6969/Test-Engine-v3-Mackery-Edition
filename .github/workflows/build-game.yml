@@ -61,7 +61,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
+          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true"
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}

@@ -42,13 +42,21 @@ jobs:
           git config --global fetch.recurseSubmodules true
           git config --global submodule.fetchJobs 4
 
+      - name: Determine platform target
+        id: platform_target
+        run: |
+          if [[ "${{ matrix.target }}" == "windows-latest" ]]; then
+            echo "PLATFORM_TARGET=windows" >> $GITHUB_ENV
+          elif [[ "${{ matrix.target }}" == "macos-latest" ]]; then
+            echo "PLATFORM_TARGET=mac" >> $GITHUB_ENV
+          fi
+
       - name: Setup Haxe
         uses: ./.github/actions/setup-haxe  # Only install Haxe
 
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          PLATFORM_TARGET=${{ matrix.target == 'windows-latest' && echo 'windows' || echo 'mac' }}
           ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
@@ -56,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-${{ matrix.target }}
-          path: export/release/${{ PLATFORM_TARGET }}/bin/
+          path: export/release/${{ env.PLATFORM_TARGET }}/bin/
 
   build-game-in-container:
     runs-on: ubuntu-latest

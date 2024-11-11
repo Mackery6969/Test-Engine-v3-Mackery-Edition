@@ -50,7 +50,7 @@ jobs:
       - name: Install dependencies on macOS
         if: ${{ matrix.target == 'macos-latest' }}
         run: |
-          brew install pixman
+          brew install pixman freetype
 
       - name: Determine platform target
         id: platform_target
@@ -98,7 +98,7 @@ jobs:
       - name: Install dependencies on Linux and HTML5
         run: |
           sudo apt-get update
-          sudo apt-get install -y libpixman-1-dev
+          sudo apt-get install -y libpixman-1-dev libfreetype6-dev
 
       - name: Run setup and build script
         run: |

@@ -1,25 +1,3 @@
-name: Build Game
-
-on:
-  workflow_dispatch:
-    inputs:
-      build-defines:
-        type: string
-        description: Build defines to use
-        default: "-DGITHUB_BUILD"
-      save-artifact:
-        type: boolean
-        description: Save the build artifact to GitHub Actions
-        default: true
-      build-game:
-        type: boolean
-        description: "Should the game be built?"
-        default: true  # Ensure default is set to true for building the game
-  push:
-    paths-ignore:
-      - "**/Dockerfile"
-      - ".github/workflows/build-docker-image.yml"
-
 jobs:
   build-game-on-host:
     strategy:
@@ -46,13 +24,19 @@ jobs:
           git config --global fetch.recurseSubmodules true
           git config --global submodule.fetchJobs 4
 
+      # Install pixman on macOS
+      - name: Install dependencies on macOS
+        if: ${{ matrix.target == 'macos-latest' }}
+        run: |
+          brew install pixman
+
       - name: Determine platform target
         id: platform_target
         run: |
           if [[ "${{ matrix.target }}" == "windows-latest" ]]; then
             echo "PLATFORM_TARGET=windows" >> $GITHUB_ENV
           elif [[ "${{ matrix.target }}" == "macos-latest" ]]; then
-            echo "PLATFORM_TARGET=mac" >> $GITHUB_ENV
+            echo "PLATFORM_TARGET=mac"
           fi
 
       - name: Setup Haxe
@@ -61,7 +45,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "true" "true" # Pass "true" to explicitly build the game and indicate GitHub Actions
+          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
@@ -88,10 +72,16 @@ jobs:
         with:
           submodules: recursive
 
+      # Install dependencies on Linux and HTML5
+      - name: Install dependencies on Linux and HTML5
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpixman-1-dev
+
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "true" "true" # Ensure "true" is passed to build the game and indicate GitHub Actions
+          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}

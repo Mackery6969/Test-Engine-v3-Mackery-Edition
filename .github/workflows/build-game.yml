@@ -64,12 +64,12 @@ jobs:
 
       - name: Build game (Windows)
         if: ${{ matrix.target == 'windows-latest' }}
-        run: haxelib run lime build windows -v -release "${{ github.event.inputs.build-defines }}"
+        run: haxelib run lime build -project project.hxp windows -v -release "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Build game (Other targets)
         if: ${{ matrix.target != 'windows-latest' }}
-        run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
+        run: haxelib run lime build -project project.hxp "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Save build artifact to Github Actions
@@ -136,7 +136,7 @@ jobs:
             haxe-hxcpp-${{ runner.os }}-
 
       - name: Build game
-        run: haxelib run lime build "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
+        run: haxelib run lime build -project project.hxp "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
         timeout-minutes: 120
 
       - name: Save build artifact to Github Actions

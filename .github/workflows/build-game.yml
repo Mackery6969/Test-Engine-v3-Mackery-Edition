@@ -9,7 +9,7 @@ on:
         default: "-DGITHUB_BUILD"
       save-artifact:
         type: boolean
-        description: Save the build artifact to Github Actions
+        description: Save the build artifact to GitHub Actions
         default: true
   push:
     paths-ignore:
@@ -29,8 +29,10 @@ jobs:
         shell: bash
 
     steps:
-      - name: Make git happy
-        run: git config --global --add safe.directory $GITHUB_WORKSPACE
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Set Git config for higher timeout
         run: |
@@ -40,41 +42,15 @@ jobs:
           git config --global fetch.recurseSubmodules true
           git config --global submodule.fetchJobs 4
 
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          submodules: recursive
+      - name: Setup Haxe
+        uses: ./.github/actions/setup-haxe  # Only install Haxe
 
-      - name: Setup build environment
-        uses: ./.github/actions/setup-haxe
-
-      - name: Restore haxelib cache
-        uses: actions/cache@v3
-        with:
-          path: .haxelib
-          key: haxe-haxelib-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
-          restore-keys: |
-            haxe-haxelib-${{ runner.os }}-
-
-      - name: Setup HXCPP dev commit (Compile only if cache miss)
-        if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
+      - name: Run setup and build script
         run: |
-          cd .haxelib/hxcpp/git/tools/hxcpp
-          haxe compile.hxml
-          cd ../../../../..
+          chmod +x ./art/install.sh
+          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.save-artifact }}" "true" # "true" indicates GitHub Actions environment
 
-      - name: Build game (Windows)
-        if: ${{ matrix.target == 'windows-latest' }}
-        run: haxelib run lime build -project project.hxp windows -v -release "${{ github.event.inputs.build-defines }}"
-        timeout-minutes: 120
-
-      - name: Build game (Other targets)
-        if: ${{ matrix.target != 'windows-latest' }}
-        run: haxelib run lime build -project project.hxp "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
-        timeout-minutes: 120
-
-      - name: Save build artifact to Github Actions
+      - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
         uses: actions/upload-artifact@v3
         with:
@@ -94,54 +70,17 @@ jobs:
         shell: bash
 
     steps:
-      - name: Set Git config for higher timeout
-        run: |
-          git config --global http.postBuffer 524288000
-          git config --global http.lowSpeedLimit 0
-          git config --global http.lowSpeedTime 999
-
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
 
-      - name: Config haxelib
+      - name: Run setup and build script
         run: |
-          haxelib --never newrepo
-          echo "HAXEPATH=$(haxelib config)" >> "$GITHUB_ENV"
+          chmod +x ./art/install.sh
+          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.save-artifact }}" "true" # "true" indicates GitHub Actions environment
 
-      - name: Restore cached dependencies
-        id: cache-hmm
-        uses: actions/cache@v3
-        with:
-          path: .haxelib
-          key: haxe-hmm-${{ runner.os }}-${{ hashFiles('**/hmm.json') }}
-          restore-keys: |
-            haxe-hmm-${{ runner.os }}-
-
-      - name: Install dependencies if not cached
-        if: ${{ steps.cache-hmm.outputs.cache-hit != 'true' }}
-        run: |
-          git config --global 'url.https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/.insteadOf' https://github.com/
-          git config --global advice.detachedHead false
-          haxelib --global run hmm install -q
-          cd .haxelib/hxcpp/git/tools/hxcpp && haxe compile.hxml
-
-      - name: Restore hxcpp cache (Non-HTML5)
-        if: ${{ matrix.target != 'html5' }}
-        uses: actions/cache@v3
-        with:
-          path: /usr/share/hxcpp
-          key: haxe-hxcpp-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            haxe-hxcpp-${{ runner.os }}-
-
-      - name: Build game
-        run: haxelib run lime build -project project.hxp "${{ matrix.target }}" -v -release --times "${{ github.event.inputs.build-defines }}"
-        timeout-minutes: 120
-
-      - name: Save build artifact to Github Actions
+      - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
         uses: actions/upload-artifact@v3
         with:

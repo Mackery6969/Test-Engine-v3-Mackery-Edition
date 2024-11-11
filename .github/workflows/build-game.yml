@@ -1,3 +1,25 @@
+name: Build Game
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-defines:
+        type: string
+        description: Build defines to use
+        default: "-DGITHUB_BUILD"
+      save-artifact:
+        type: boolean
+        description: Save the build artifact to GitHub Actions
+        default: true
+      build-game:
+        type: boolean
+        description: "Should the game be built?"
+        default: true  # Ensure default is set to true for building the game
+  push:
+    paths-ignore:
+      - "**/Dockerfile"
+      - ".github/workflows/build-docker-image.yml"
+
 jobs:
   build-game-on-host:
     strategy:

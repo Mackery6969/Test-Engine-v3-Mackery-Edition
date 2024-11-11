@@ -15,6 +15,10 @@ on:
         type: boolean
         description: "Should the game be built?"
         default: true  # Set to true if you want the game to build by default
+  push:
+    paths-ignore:
+      - "**/Dockerfile"
+      - ".github/workflows/build-docker-image.yml"
 
 jobs:
   build-game-on-host:

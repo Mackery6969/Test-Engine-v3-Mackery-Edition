@@ -48,14 +48,15 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
+          PLATFORM_TARGET=${{ matrix.target == 'windows-latest' && echo 'windows' || echo 'mac' }}
+          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
         uses: actions/upload-artifact@v3
         with:
           name: build-${{ matrix.target }}
-          path: export/release/${{ matrix.target }}/bin/
+          path: export/release/${{ PLATFORM_TARGET }}/bin/
 
   build-game-in-container:
     runs-on: ubuntu-latest

@@ -11,10 +11,10 @@ on:
         type: boolean
         description: Save the build artifact to GitHub Actions
         default: true
-  push:
-    paths-ignore:
-      - "**/Dockerfile"
-      - ".github/workflows/build-docker-image.yml"
+      build-game:
+        type: boolean
+        description: "Should the game be built?"
+        default: true  # Set to true if you want the game to build by default
 
 jobs:
   build-game-on-host:
@@ -48,7 +48,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.save-artifact }}" "true" # "true" indicates GitHub Actions environment
+          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
@@ -78,7 +78,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.save-artifact }}" "true" # "true" indicates GitHub Actions environment
+          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}

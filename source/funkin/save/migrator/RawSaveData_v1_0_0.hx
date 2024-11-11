@@ -8,6 +8,8 @@ typedef RawSaveData_v1_0_0 =
   var mute:Bool;
   var volume:Float;
 
+  var seenFlashingState:Bool;
+
   var sessionId:String;
 
   var songCompletion:Map<String, Float>;

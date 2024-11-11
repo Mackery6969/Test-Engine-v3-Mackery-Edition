@@ -266,7 +266,7 @@ class Project extends HXProject {
 	 */
 	function flair() {
 		// TODO: Implement this.
-		info("Friday Night Funkin'");
+		info("Friday Night Funkin' Test Engine");
 		info("Initializing build...");
 
 		info("Target Version: " + VERSION);

@@ -33,6 +33,7 @@ import openfl.net.NetStream;
 import funkin.api.newgrounds.NGio;
 import openfl.display.BlendMode;
 import funkin.save.Save;
+import funkin.ui.title.FlashingState;
 
 #if desktop
 #end
@@ -59,6 +60,7 @@ class TitleState extends MusicBeatState
   override public function create():Void
   {
     super.create();
+
     swagShader = new ColorSwap();
 
     curWacky = FlxG.random.getObject(getIntroTextShit());
@@ -68,11 +70,34 @@ class TitleState extends MusicBeatState
     // DEBUG BULLSHIT
 
     // netConnection.addEventListener(MouseEvent.MOUSE_DOWN, overlay_onMouseDown);
-    if (!initialized) new FlxTimer().start(1, function(tmr:FlxTimer) {
-      startIntro();
-    });
+    if (!initialized)
+    {
+      new FlxTimer().start(1, function(tmr:FlxTimer) {
+        // load flashing garbage
+        if (!Preferences.seenFlashingState)
+        {
+          trace('opening flashing state...');
+          FlxG.switchState(() -> new FlashingState());
+        }
+        else
+        {
+          startIntro();
+        }
+      });
+    }
     else
-      startIntro();
+    {
+      // load flashing garbage
+      if (!Preferences.seenFlashingState)
+      {
+        trace('opening flashing state...');
+        FlxG.switchState(() -> new FlashingState());
+      }
+      else
+      {
+        startIntro();
+      }
+    }
   }
 
   function client_onMetaData(metaData:Dynamic)
@@ -266,6 +291,14 @@ class TitleState extends MusicBeatState
     if (FlxG.keys.pressed.UP) FlxG.sound.music.pitch += 0.5 * elapsed;
 
     if (FlxG.keys.pressed.DOWN) FlxG.sound.music.pitch -= 0.5 * elapsed;
+    #end
+
+    #if debug
+    if (FlxG.keys.justPressed.L)
+    {
+      trace('opening flashing state...');
+      FlxG.switchState(() -> new FlashingState());
+    }
     #end
 
     #if desktop

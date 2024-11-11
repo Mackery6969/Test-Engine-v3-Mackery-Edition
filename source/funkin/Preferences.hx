@@ -275,6 +275,188 @@ class Preferences
   }
 
   /**
+   * The quality of the game, setting this to Low disables some objects.
+   * @default 'High'
+   */
+  public static var quality(get, set):String;
+
+  static function get_quality():String
+  {
+    return Save?.instance?.options?.quality;
+  }
+
+  static function set_quality(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.options.quality = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
+   * @default 'normal'
+   */
+  public static var uiSkin(get, set):String;
+
+  static function get_uiSkin():String
+  {
+    return Save?.instance?.options?.uiSkin;
+  }
+
+  static function set_uiSkin(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.options.uiSkin = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
+   * @default 'normal'
+   */
+  public static var seenFlashingState(get, set):Bool;
+
+  static function get_seenFlashingState():Bool
+  {
+    return Save?.instance?.options?.seenFlashingState;
+  }
+
+  static function set_seenFlashingState(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.seenFlashingState = value;
+    save.flush();
+    return value;
+  }
+
+  /*
+    - - - - - -
+    MODIFIERS
+    - - - - - -
+   */
+  public static var practice(get, set):Bool;
+
+  static function get_practice():Bool
+  {
+    return Save?.instance?.modifiers?.practice;
+  }
+
+  static function set_practice(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.modifiers.practice = value;
+    save.flush();
+    return value;
+  }
+
+  public static var botPlay(get, set):Bool;
+
+  static function get_botPlay():Bool
+  {
+    return Save?.instance?.modifiers?.botPlay;
+  }
+
+  static function set_botPlay(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.modifiers.botPlay = value;
+    save.flush();
+    return value;
+  }
+
+  public static var songSpeed(get, set):Float;
+
+  static function get_songSpeed():Float
+  {
+    return Save?.instance?.modifiers?.songSpeed;
+  }
+
+  static function set_songSpeed(value:Float):Float
+  {
+    var save:Save = Save.instance;
+    save.modifiers.songSpeed = value;
+    save.flush();
+    return value;
+  }
+
+  public static var instaDeathMode(get, set):String;
+
+  static function get_instaDeathMode():String
+  {
+    return Save?.instance?.modifiers?.instaDeathMode;
+  }
+
+  static function set_instaDeathMode(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.modifiers.instaDeathMode = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthGain(get, set):Float;
+
+  static function get_healthGain():Float
+  {
+    return Save?.instance?.modifiers?.healthGain;
+  }
+
+  static function set_healthGain(value:Float):Float
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthGain = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthLoss(get, set):Float;
+
+  static function get_healthLoss():Float
+  {
+    return Save?.instance?.modifiers?.healthLoss;
+  }
+
+  static function set_healthLoss(value:Float):Float
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthLoss = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthDrainType(get, set):String;
+
+  static function get_healthDrainType():String
+  {
+    return Save?.instance?.modifiers?.healthDrainType;
+  }
+
+  static function set_healthDrainType(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthDrainType = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthDrainAmount(get, set):Float;
+
+  static function get_healthDrainAmount():Float
+  {
+    return Save?.instance?.modifiers?.healthDrainAmount;
+  }
+
+  static function set_healthDrainAmount(value:Float):Float
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthDrainAmount = value;
+    save.flush();
+    return value;
+  }
+
+  /**
    * Loads the user's preferences from the save data and apply them.
    */
   public static function init():Void

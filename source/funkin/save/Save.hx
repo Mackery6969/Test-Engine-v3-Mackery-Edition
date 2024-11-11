@@ -7,12 +7,10 @@ import funkin.play.scoring.Scoring;
 import funkin.play.scoring.Scoring.ScoringRank;
 import funkin.save.migrator.RawSaveData_v1_0_0;
 import funkin.save.migrator.SaveDataMigrator;
-import funkin.save.migrator.SaveDataMigrator;
 import funkin.ui.debug.charting.ChartEditorState.ChartEditorLiveInputStyle;
 import funkin.ui.debug.charting.ChartEditorState.ChartEditorTheme;
 import funkin.ui.debug.stageeditor.StageEditorState.StageEditorTheme;
 import funkin.util.SerializerUtil;
-import thx.semver.Version;
 import thx.semver.Version;
 
 @:nullSafety
@@ -22,8 +20,8 @@ class Save
   public static final SAVE_DATA_VERSION_RULE:thx.semver.VersionRule = "2.0.x";
 
   // We load this version's saves from a new save path, to maintain SOME level of backwards compatibility.
-  static final SAVE_PATH:String = 'FunkinCrew';
-  static final SAVE_NAME:String = 'Funkin';
+  static final SAVE_PATH:String = 'TECrew';
+  static final SAVE_NAME:String = 'TestEngine';
 
   static final SAVE_PATH_LEGACY:String = 'ninjamuffin99';
   static final SAVE_NAME_LEGACY:String = 'funkin';
@@ -107,6 +105,10 @@ class Save
           oldScoreText: false,
           instrumentalSelect: false,
           songLaunchScreen: true,
+          quality: "High",
+          uiSkin: "normal",
+
+          seenFlashingState: false, // used for making sure flashing menu doesent come up again.
 
           controls:
             {
@@ -124,6 +126,18 @@ class Save
             },
         },
 
+      modifiers:
+        {
+          practice: false,
+          botPlay: false,
+          songSpeed: 1.0,
+          instaDeathMode: 'None',
+          healthGain: 1.0,
+          healthLoss: 1.0,
+          healthDrainType: 'None',
+          healthDrainAmount: 0.02,
+        },
+
       mods:
         {
           // No mods enabled.
@@ -134,7 +148,7 @@ class Save
       unlocks:
         {
           // Default to having seen the default character.
-          charactersSeen: ["bf"],
+          charactersSeen: ["bf", "pico"],
           oldChar: false
         },
 
@@ -171,6 +185,16 @@ class Save
   function get_options():SaveDataOptions
   {
     return data.options;
+  }
+
+  /**
+   * NOTE: Modifications will not be saved without calling 'Save.flush()'!
+   */
+  public var modifiers(get, never):SaveDataModifiers;
+
+  function get_modifiers():SaveDataModifiers
+  {
+    return data.modifiers;
   }
 
   /**
@@ -1153,6 +1177,14 @@ typedef RawSaveData =
    */
   var options:SaveDataOptions;
 
+  /**
+   * The user's modifier preferences.
+   */
+  var modifiers:SaveDataModifiers;
+
+  /**
+   * Unlocks for in-game stuff.
+   */
   var unlocks:SaveDataUnlocks;
 
   /**
@@ -1358,6 +1390,20 @@ typedef SaveDataOptions =
    */
   var oldScoreText:Bool;
 
+  /**
+   * The quality of the game, setting this to Low disables some objects.
+   * @default 'High'
+   */
+  var quality:String;
+
+  /**
+   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
+   * @default 'normal'
+   */
+  var uiSkin:String;
+
+  var seenFlashingState:Bool;
+
   var controls:
     {
       var p1:
@@ -1372,6 +1418,57 @@ typedef SaveDataOptions =
         };
     };
 };
+
+typedef SaveDataModifiers =
+{
+  /**
+   * Practice Mode, you cannot die.
+   * @default 'false'
+   */
+  var practice:Bool;
+
+  /**
+   * Automatically plays the song for you.
+   * @default 'false'
+   */
+  var botPlay:Bool;
+
+  /**
+   * The speed of the song.
+   * @default '1.0'
+   */
+  var songSpeed:Float;
+
+  /**
+   * The type of instant death, theres None, SFC, GFC, and FC)
+   * @default 'None'
+   */
+  var instaDeathMode:String;
+
+  /**
+   * The multiplier of health gained.
+   * @default '1.0'
+   */
+  var healthGain:Float;
+
+  /**
+   * The multiplier of health lost.
+   * @default '1.0'
+   */
+  var healthLoss:Float;
+
+  /**
+   * The type of health drain, theres None, Penalty, Fair Fight, and Constant.
+   * @default 'None'
+   */
+  var healthDrainType:String;
+
+  /**
+   * The amount of health drain, only takes effect if Fair Fight or Constant is selected.
+   * @default '0.02'
+   */
+  var healthDrainAmount:Float;
+}
 
 /**
  * An anonymous structure containing a specific player's bound keys.

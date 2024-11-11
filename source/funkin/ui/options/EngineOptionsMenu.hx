@@ -70,6 +70,14 @@ class EngineOptionsMenu extends Page
       function(value:Bool):Void {
         Preferences.songLaunchScreen = value;
       }, Preferences.songLaunchScreen);
+    createPrefItemEnum('Quality', 'Allows you to change the quality of the backgrounds, useful on slower computers.',
+      ['Low' => "Low Quality", 'High' => "High/Medium Quality"], function(value:String):Void {
+        Preferences.quality = value;
+    }, Preferences.quality);
+    createPrefItemEnum('UI Skin', 'Choose a skin for the UI (eg, shit, bad, good, shit)', ['default' => 'Normal', 'alt' => 'Alternate'],
+      function(value:String):Void {
+        Preferences.uiSkin = value;
+      }, Preferences.uiSkin);
   }
 
   override function update(elapsed:Float):Void

@@ -21,6 +21,8 @@ class NumberPreferenceItem extends TextMenuItem
   static final HOLD_DELAY:Float = 0.3; // seconds
   static final CHANGE_RATE:Float = 0.08; // seconds
 
+  public var allowHolding:Bool = true;
+
   // Constructor-initialized variables
   public var currentValue:Float;
   public var min:Float;
@@ -69,10 +71,13 @@ class NumberPreferenceItem extends TextMenuItem
     // var fancyTextFancyColor:Color;
     if (selected)
     {
-      holdDelayTimer -= elapsed;
-      if (holdDelayTimer <= 0.0)
+      if (allowHolding)
       {
-        changeRateTimer -= elapsed;
+        holdDelayTimer -= elapsed;
+        if (holdDelayTimer <= 0.0)
+        {
+          changeRateTimer -= elapsed;
+        }
       }
 
       var jpLeft:Bool = controls().UI_LEFT_P;

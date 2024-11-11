@@ -56,7 +56,7 @@ import funkin.play.stage.Stage;
 import funkin.save.Save;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.stage.StageOffsetSubState;
-import funkin.ui.freeplay.SongLaunchState;
+import funkin.ui.SongLaunchState;
 import funkin.ui.mainmenu.MainMenuState;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.options.PreferencesMenu;
@@ -339,6 +339,11 @@ class PlayState extends MusicBeatSubState
    * Whether the game is currently in an animated cutscene, and gameplay should be stopped.
    */
   public var isInCutscene:Bool = false;
+
+  /**
+   * How many times the player has been poisoned
+   */
+  public var poisonTimes:Int = 0;
 
   /**
    * Whether the inputs should be disabled for whatever reason... used for the stage edit lol!
@@ -836,6 +841,8 @@ class PlayState extends MusicBeatSubState
     var list = FlxG.sound.list;
     updateHealthBar();
     updateInfoText();
+
+    if (Preferences.healthDrainType == "Constant") health -= Preferences.healthDrainAmount;
 
     // Handle restarting the song when needed (player death or pressing Retry)
     if (needsReset)
@@ -2163,43 +2170,45 @@ class PlayState extends MusicBeatSubState
       infoText.screenCenter(X);
     }
     // TODO: Add functionality for modules to update the score text.
-    if (isBotPlayMode)
-    {
-      infoText.text = 'Bot Play Enabled';
-    }
-    else
-    {
-      var misses:Int = Highscore.tallies.missed;
-      // TODO: Add an option for this maybe?
-      var commaSeparated:Bool = true;
-      if (!Preferences.oldScoreText)
-      {
-        if (misses == 0 && Highscore.tallies.totalNotesHit > 0)
+    /*
+        if (isBotPlayMode)
         {
-          infoText.text = ' | Score: '
-            + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
-            + ' | Misses: '
-            + misses
-            + ' (FC) | Accuracy: '
-            + getSongAccuracy()
-            + ' | ';
+          infoText.text = 'Bot Play Enabled';
         }
         else
         {
-          infoText.text = ' | Score: '
-            + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
-            + ' | Misses: '
-            + misses
-            + ' | Accuracy: '
-            + getSongAccuracy()
-            + ' | ';
-        }
+       */
+    var misses:Int = Highscore.tallies.missed;
+    // TODO: Add an option for this maybe?
+    var commaSeparated:Bool = true;
+    if (!Preferences.oldScoreText)
+    {
+      if (misses == 0 && Highscore.tallies.totalNotesHit > 0)
+      {
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' (FC) | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
       }
       else
       {
-        infoText.text = 'Score: ${FlxStringUtil.formatMoney(songScore, false, commaSeparated)}';
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
       }
     }
+    else
+    {
+      infoText.text = 'Score: ${FlxStringUtil.formatMoney(songScore, false, commaSeparated)}';
+    }
+    // }
   }
 
   function getSongAccuracy():String
@@ -2223,14 +2232,7 @@ class PlayState extends MusicBeatSubState
      */
   function updateHealthBar():Void
   {
-    if (isBotPlayMode)
-    {
-      healthLerp = Constants.HEALTH_MAX;
-    }
-    else
-    {
-      healthLerp = FlxMath.lerp(healthLerp, health, 0.15);
-    }
+    healthLerp = FlxMath.lerp(healthLerp, health, 0.15);
   }
 
   /**
@@ -2274,6 +2276,11 @@ class PlayState extends MusicBeatSubState
       var hitWindowStartTail = note.strumTime + sustainLength + Conductor.instance.inputOffset - Constants.HIT_WINDOW_MS_TAIL;
       var hitWindowEndTail = note.strumTime + sustainLength + Conductor.instance.inputOffset + Constants.HIT_WINDOW_MS_TAIL;
 
+      if (note.isHoldNote && note.holdNoteSprite != null)
+      {
+        note.holdNoteSprite.alpha = 0.75; // Set transparency to 50%
+      }
+
       // Handle missed head note
       if (Conductor.instance.songPosition > hitWindowEndHead)
       {
@@ -2290,6 +2297,11 @@ class PlayState extends MusicBeatSubState
       else if (Conductor.instance.songPosition > note.strumTime)
       {
         if (note.hasBeenHit) continue;
+
+        if (Preferences.healthDrainType == "Fair Fight" && health >= (Constants.HEALTH_MIN + 0.05))
+        {
+          health -= Preferences.healthDrainAmount;
+        }
 
         var event:NoteScriptEvent = new HitNoteScriptEvent(note, 0.0, 0, 'perfect', false, 0);
         dispatchEvent(event);
@@ -2324,6 +2336,11 @@ class PlayState extends MusicBeatSubState
     {
       if (holdNote == null || !holdNote.alive) continue;
 
+      if (Preferences.healthDrainType == "Fair Fight" && health >= (Constants.HEALTH_MIN + 0.05))
+      {
+        health -= Preferences.healthDrainAmount / 16;
+      }
+
       // Hold notes should continue hitting during the sustain period
       if (holdNote.hitNote && !holdNote.missedNote && holdNote.sustainLength > 0)
       {
@@ -2345,6 +2362,11 @@ class PlayState extends MusicBeatSubState
     for (note in playerStrumline.notes.members)
     {
       if (note == null) continue;
+
+      if (note.isHoldNote && note.holdNoteSprite != null)
+      {
+        note.holdNoteSprite.alpha = 0.75; // Set transparency to 50%
+      }
 
       if (note.hasBeenHit)
       {
@@ -2403,7 +2425,8 @@ class PlayState extends MusicBeatSubState
       // Handle missed note logic
       if (note.hasMissed && !note.handledMiss)
       {
-        var event:NoteScriptEvent = new NoteScriptEvent(NOTE_MISS, note, -Constants.HEALTH_MISS_PENALTY * SongLaunchState.healthLoss, 0, true);
+        var healthLost = Preferences.healthLoss != 0 ? -Constants.HEALTH_MISS_PENALTY : 0;
+        var event:NoteScriptEvent = new NoteScriptEvent(NOTE_MISS, note, healthLost, 0, true);
         dispatchEvent(event);
         if (event.eventCanceled) continue;
 
@@ -2425,9 +2448,10 @@ class PlayState extends MusicBeatSubState
       // Player is holding the note correctly
       if (holdNote.hitNote && !holdNote.missedNote && holdNote.sustainLength > 0)
       {
+        health += Constants.HEALTH_HOLD_BONUS_PER_SECOND * elapsed;
+
         if (!isBotPlayMode)
         {
-          health += Constants.HEALTH_HOLD_BONUS_PER_SECOND * elapsed;
           songScore += Std.int(Constants.SCORE_HOLD_BONUS_PER_SECOND * elapsed);
         }
 
@@ -2440,9 +2464,10 @@ class PlayState extends MusicBeatSubState
       // Handle missed hold note release
       if (holdNote.missedNote && !holdNote.handledMiss)
       {
-        health -= Constants.HEALTH_MISS_PENALTY; // Larger penalty for missing the release
+        var healthLost = Preferences.healthLoss != 0 ? Constants.HEALTH_MISS_PENALTY : 0;
+        health -= healthLost; // Larger penalty for missing the release
         holdNote.handledMiss = true;
-        holdNote.alpha = 0.5; // Optional: Dim the hold note when missed
+        holdNote.alpha = 0.25; // Optional: Dim the hold note when missed
       }
     }
   }
@@ -2538,14 +2563,7 @@ class PlayState extends MusicBeatSubState
         if (targetNote == null) targetNote = notesInDirection[0];
         if (targetNote == null) continue;
 
-        if (targetNote.isHoldNote)
-        {
-          goodNoteHit(targetNote, input); // Only award partial points here
-        }
-        else
-        {
-          goodNoteHit(targetNote, input);
-        }
+        goodNoteHit(targetNote, input); // Only award partial points here
 
         notesInDirection.remove(targetNote);
         playerStrumline.playConfirm(input.noteDirection);
@@ -2612,6 +2630,40 @@ class PlayState extends MusicBeatSubState
       }
     }
 
+    if (Preferences.instaDeathMode != "None")
+    {
+      if (Preferences.instaDeathMode == "SFC" || Preferences.instaDeathMode == "GFC")
+      {
+        if (daRating != "sick" && Preferences.instaDeathMode == "SFC") health -= 9999;
+        else if ((daRating != "sick" || daRating != "good") && Preferences.instaDeathMode == "GFC") health -= 9999;
+      }
+      switch (daRating)
+      {
+        case 'sick':
+          if (Constants.JUDGEMENT_SICK_COMBO_BREAK) health -= 9999;
+        case 'good':
+          if (Constants.JUDGEMENT_GOOD_COMBO_BREAK) health -= 9999;
+        case 'bad':
+          if (Constants.JUDGEMENT_BAD_COMBO_BREAK) health -= 9999;
+        case 'shit':
+          if (Constants.JUDGEMENT_SHIT_COMBO_BREAK) health -= 9999;
+      }
+    }
+    else if (Preferences.healthDrainType == "Penalty")
+    {
+      switch (daRating)
+      {
+        case 'sick':
+          if (Constants.JUDGEMENT_SICK_COMBO_BREAK) poison();
+        case 'good':
+          if (Constants.JUDGEMENT_GOOD_COMBO_BREAK) poison();
+        case 'bad':
+          if (Constants.JUDGEMENT_BAD_COMBO_BREAK) poison();
+        case 'shit':
+          if (Constants.JUDGEMENT_SHIT_COMBO_BREAK) poison();
+      }
+    }
+
     var event:HitNoteScriptEvent = new HitNoteScriptEvent(note, healthChange, score, daRating, isComboBreak, Highscore.tallies.combo + 1, noteDiff,
       daRating == 'sick');
     dispatchEvent(event);
@@ -2671,10 +2723,14 @@ class PlayState extends MusicBeatSubState
           });
       }
     }
-    if (SongLaunchState.lossOnComboLoss)
+    if (Preferences.instaDeathMode != "None")
     {
       health -= 9999; // instakill!!
       trace("You Lost!");
+    }
+    if (Preferences.healthDrainType == "Penalty")
+    {
+      poison();
     }
 
     vocals.playerVolume = 0;
@@ -2692,6 +2748,21 @@ class PlayState extends MusicBeatSubState
     {
       vocals.playerVolume = 0;
       FunkinSound.playOnce(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.5, 0.6));
+    }
+  }
+
+  function poison():Void
+  {
+    if (Preferences.healthDrainType == "Penalty" && poisonTimes < Constants.MAX_POISON_TIMES)
+    {
+      poisonTimes += 1;
+      var poisonPlusTimer:FlxTimer = new FlxTimer().start(Constants.POISON_DAMAGE_INTERVAL, function(tmr:FlxTimer) {
+        health -= Constants.POISON_DAMAGE;
+      }, 0);
+      new FlxTimer().start(Constants.POISON_DAMAGE_TIME, function(tmr:FlxTimer) {
+        poisonPlusTimer.cancel();
+        poisonTimes -= 1;
+      });
     }
   }
 
@@ -3007,7 +3078,7 @@ class PlayState extends MusicBeatSubState
     var isNewHighscore = false;
     var prevScoreData:Null<SaveScoreData> = Save.instance.getSongScore(currentSong.id, suffixedDifficulty);
 
-    if (currentSong != null && currentSong.validScore && SongLaunchState.saveScore)
+    if (currentSong != null && currentSong.validScore)
     {
       // crackhead double thingie, sets whether was new highscore, AND saves the song!
       var data =
@@ -3030,7 +3101,7 @@ class PlayState extends MusicBeatSubState
       // adds current song data into the tallies for the level (story levels)
       Highscore.talliesLevel = Highscore.combineTallies(Highscore.tallies, Highscore.talliesLevel);
 
-      if (!isPracticeMode && !isBotPlayMode)
+      if (!isPracticeMode && !isBotPlayMode && SongLaunchState.saveScore)
       {
         isNewHighscore = Save.instance.isSongHighScore(currentSong.id, suffixedDifficulty, data);
 

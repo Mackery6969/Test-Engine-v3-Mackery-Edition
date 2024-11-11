@@ -172,6 +172,13 @@ class Stage extends FlxSpriteGroup implements IPlayStateScriptedClass implements
     {
       trace('  Placing prop: ${dataProp.name} (${dataProp.assetPath})');
 
+      // Check if the sprite should only be loaded in high quality
+      if (dataProp.isHighQualityOnly && Preferences.quality != "High")
+      {
+        trace('Skipping prop ${dataProp.name} because quality setting is not high');
+        continue;
+      }
+
       var isSolidColor = dataProp.assetPath.startsWith('#');
       var isAnimated = dataProp.animations.length > 0;
 

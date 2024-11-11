@@ -1,7 +1,7 @@
 package funkin.ui.freeplay;
 
 import funkin.ui.freeplay.backcards.*;
-import funkin.ui.freeplay.SongLaunchState;
+import funkin.ui.SongLaunchState;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.FlxCamera;
 import flixel.FlxSprite;
@@ -1923,8 +1923,6 @@ class FreeplayState extends MusicBeatSubState
 
     if (Preferences.songLaunchScreen)
     {
-      SongLaunchState.isStoryMode = false;
-
       var targetSongId:String = cap?.freeplayData?.data.id ?? 'unknown';
       var targetSongNullable:Null<Song> = SongRegistry.instance.fetchEntry(targetSongId);
       if (targetSongNullable == null)
@@ -1959,12 +1957,6 @@ class FreeplayState extends MusicBeatSubState
 
       backingCard?.confirm();
 
-      /*
-        new FlxTimer().start(styleData?.getStartDelay(), function(tmr:FlxTimer) {
-          FunkinSound.emptyPartialQueue();
-        }
-       */
-
       SongLaunchState.curSong = targetSong;
       SongLaunchState.curDifficulty = currentDifficulty;
       SongLaunchState.curVariation = currentVariation;
@@ -1973,7 +1965,7 @@ class FreeplayState extends MusicBeatSubState
         // FunkinSound.emptyPartialQueue();
 
         Paths.setCurrentLevel(cap?.freeplayData?.levelId);
-        FlxG.switchState(() -> new SongLaunchState());
+        FlxG.switchState(() -> new SongLaunchState(false));
       });
     }
     else

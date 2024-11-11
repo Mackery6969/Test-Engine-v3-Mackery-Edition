@@ -37,6 +37,8 @@ jobs:
           git config --global http.postBuffer 524288000
           git config --global http.lowSpeedLimit 0
           git config --global http.lowSpeedTime 999
+          git config --global fetch.recurseSubmodules true
+          git config --global submodule.fetchJobs 4
 
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -85,8 +87,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: linux-latest
-          - target: html5-latest
+          - target: linux
+          - target: html5
     defaults:
       run:
         shell: bash

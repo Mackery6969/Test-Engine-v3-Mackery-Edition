@@ -14,7 +14,7 @@ on:
       build-game:
         type: boolean
         description: "Should the game be built?"
-        default: true  # Set to true if you want the game to build by default
+        default: true  # Ensure default is set to true for building the game
   push:
     paths-ignore:
       - "**/Dockerfile"
@@ -61,7 +61,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true"
+          ./art/install.sh "$PLATFORM_TARGET" "${{ github.event.inputs.build-defines }}" "true" "true" # Pass "true" to explicitly build the game and indicate GitHub Actions
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}
@@ -91,7 +91,7 @@ jobs:
       - name: Run setup and build script
         run: |
           chmod +x ./art/install.sh
-          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "${{ github.event.inputs.build-game }}" "true" # "true" indicates GitHub Actions environment
+          ./art/install.sh "${{ matrix.target }}" "${{ github.event.inputs.build-defines }}" "true" "true" # Ensure "true" is passed to build the game and indicate GitHub Actions
 
       - name: Save build artifact to GitHub Actions
         if: ${{ github.event.inputs.save-artifact }}

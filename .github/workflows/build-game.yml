@@ -51,6 +51,8 @@ jobs:
         if: ${{ matrix.target == 'macos-latest' }}
         run: |
           brew install pixman freetype
+          brew reinstall pixman
+          brew reinstall freetype
 
       - name: Determine platform target
         id: platform_target

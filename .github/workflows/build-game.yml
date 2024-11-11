@@ -32,6 +32,12 @@ jobs:
       - name: Make git happy
         run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
+      - name: Set Git config for higher timeout
+        run: |
+          git config --global http.postBuffer 524288000
+          git config --global http.lowSpeedLimit 0
+          git config --global http.lowSpeedTime 999
+
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
@@ -86,6 +92,12 @@ jobs:
         shell: bash
 
     steps:
+      - name: Set Git config for higher timeout
+        run: |
+          git config --global http.postBuffer 524288000
+          git config --global http.lowSpeedLimit 0
+          git config --global http.lowSpeedTime 999
+
       - name: Checkout repo
         uses: actions/checkout@v3
         with:

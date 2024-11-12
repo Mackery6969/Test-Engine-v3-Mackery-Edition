@@ -491,10 +491,10 @@ class Constants
    */
   public static final HEALTH_MINE_PENALTY:Float = (15.0 / 100.0 * HEALTH_MAX) * Preferences.healthLoss; // 15.0%
 
-  public static final POISON_DAMAGE:Float = 0.04 * Preferences.healthLoss;
+  public static final POISON_DAMAGE:Float = 0.045 * Preferences.healthLoss;
   public static final POISON_DAMAGE_INTERVAL:Float = 0.5;
   public static final POISON_DAMAGE_TIME:Float = 3;
-  public static final MAX_POISON_TIMES:Int = 3;
+  public static final MAX_POISON_TIMES:Int = 5;
 
   /**
    * SCORE VALUES

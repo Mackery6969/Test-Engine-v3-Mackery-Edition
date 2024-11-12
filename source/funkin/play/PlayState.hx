@@ -842,8 +842,6 @@ class PlayState extends MusicBeatSubState
     updateHealthBar();
     updateInfoText();
 
-    if (Preferences.healthDrainType == "Constant") health -= Preferences.healthDrainAmount;
-
     // Handle restarting the song when needed (player death or pressing Retry)
     if (needsReset)
     {
@@ -1443,6 +1441,8 @@ class PlayState extends MusicBeatSubState
 
     if (iconP1 != null) iconP1.onStepHit(Std.int(Conductor.instance.currentStep));
     if (iconP2 != null) iconP2.onStepHit(Std.int(Conductor.instance.currentStep));
+
+    if (Preferences.healthDrainType == "Constant") health -= Preferences.healthDrainAmount;
 
     return true;
   }
@@ -2338,7 +2338,7 @@ class PlayState extends MusicBeatSubState
 
       if (Preferences.healthDrainType == "Fair Fight" && health >= (Constants.HEALTH_MIN + 0.05))
       {
-        health -= Preferences.healthDrainAmount / 16;
+        // health -= Preferences.healthDrainAmount / 24;
       }
 
       // Hold notes should continue hitting during the sustain period

@@ -4,6 +4,7 @@
 APIStuff.hx
 dump/
 export/
+hmm/
 RECOVER_*.fla
 shitAudio/
 .build_time
@@ -15,3 +16,6 @@ node_modules/
 package.json
 package-lock.json
 .aider*
+
+# UGH
+!haxelib/jsonpath/git/

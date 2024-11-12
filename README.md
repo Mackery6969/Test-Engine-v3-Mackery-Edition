@@ -1,5 +1,3 @@
-ON HOLD: due to innacurate updates!!!
-
 # Friday Night Funkin'
 
 Friday Night Funkin' is a rhythm game. Built using HaxeFlixel for Ludum Dare 47.

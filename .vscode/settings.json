@@ -85,6 +85,10 @@
   },
   "projectManager.git.baseFolders": ["./"],
 
+  "files.exclude": {
+    "**/.*": false
+  },
+
   "haxecheckstyle.sourceFolders": ["src", "source"],
   "haxecheckstyle.externalSourceRoots": [],
   "haxecheckstyle.configurationFile": "checkstyle.json",

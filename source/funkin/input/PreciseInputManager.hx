@@ -87,8 +87,6 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     _deviceBinds = [];
 
     _keyList = [];
-    // _keyListMap
-    // _keyListArray
     _keyListDir = new Map<FlxKey, NoteDirection>();
 
     _buttonList = [];
@@ -102,8 +100,8 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     // Keyboard
     FlxG.stage.removeEventListener(KeyboardEvent.KEY_DOWN, onKeyDown);
     FlxG.stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUp);
-    FlxG.stage.application.window.onKeyDownPrecise.add(handleKeyDown);
-    FlxG.stage.application.window.onKeyUpPrecise.add(handleKeyUp);
+    FlxG.stage.application.window.onKeyDown.add(handleKeyDown);
+    FlxG.stage.application.window.onKeyUp.add(handleKeyUp);
 
     preventDefaultKeys = getPreventDefaultKeys();
 
@@ -148,16 +146,11 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
   public static function getCurrentTimestamp():Int64
   {
     #if html5
-    // NOTE: This timestamp isn't that precise on standard HTML5 builds.
-    // This is because of browser safeguards against timing attacks.
-    // See https://web.dev/coop-coep to enable headers which allow for more precise timestamps.
     return haxe.Int64.fromFloat(js.Browser.window.performance.now()) * NS_PER_MS;
     #elseif cpp
-    // NOTE: If the game hard crashes on this line, rebuild Lime!
-    // `lime rebuild windows -clean`
-    return lime._internal.backend.native.NativeCFFI.lime_sdl_get_ticks() * NS_PER_MS;
+    return lime.system.System.getTimer() * NS_PER_MS;
     #else
-    throw "Eric didn't implement precise timestamps on this platform!";
+    throw "Precise timestamps are not implemented on this platform!";
     #end
   }
 
@@ -192,13 +185,14 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     clearButtons();
 
     var limeGamepad = FlxGamepadUtil.getLimeGamepad(gamepad);
-    var callbacks =
-      {
-        onButtonDown: handleButtonDown.bind(gamepad),
-        onButtonUp: handleButtonUp.bind(gamepad)
-      };
-    limeGamepad.onButtonDownPrecise.add(callbacks.onButtonDown);
-    limeGamepad.onButtonUpPrecise.add(callbacks.onButtonUp);
+
+    limeGamepad.onButtonDown.add(function(button:LimeGamepadButton):Void {
+      handleButtonDown(gamepad, button);
+    });
+
+    limeGamepad.onButtonUp.add(function(button:LimeGamepadButton):Void {
+      handleButtonUp(gamepad, button);
+    });
 
     for (noteDirection in DIRECTIONS)
     {
@@ -286,16 +280,14 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     }
   }
 
-  function handleKeyDown(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+  function handleKeyDown(keyCode:KeyCode, _:KeyModifier):Void
   {
     var key:FlxKey = convertKeyCode(keyCode);
     if (_keyList.indexOf(key) == -1) return;
 
-    // TODO: Remove this line with SDL3 when timestamps change meaning.
-    // This is because SDL3's timestamps are measured in nanoseconds, not milliseconds.
-    timestamp *= Constants.NS_PER_MS; // 18126000000 38367000000
+    var timestamp:Int64 = getCurrentTimestamp();
     timestamp -= Conductor.instance.inputOffset * Constants.NS_PER_MS;
-    // trace(timestamp);
+
     updateKeyStates(key, true);
 
     if (getInputByKey(key)?.justPressed ?? false)
@@ -309,14 +301,12 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     }
   }
 
-  function handleKeyUp(keyCode:KeyCode, _:KeyModifier, timestamp:Int64):Void
+  function handleKeyUp(keyCode:KeyCode, _:KeyModifier):Void
   {
     var key:FlxKey = convertKeyCode(keyCode);
     if (_keyList.indexOf(key) == -1) return;
 
-    // TODO: Remove this line with SDL3 when timestamps change meaning.
-    // This is because SDL3's timestamps ar e measured in nanoseconds, not milliseconds.
-    timestamp *= Constants.NS_PER_MS;
+    var timestamp:Int64 = getCurrentTimestamp();
 
     updateKeyStates(key, false);
 
@@ -331,16 +321,14 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     }
   }
 
-  function handleButtonDown(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
+  function handleButtonDown(gamepad:FlxGamepad, button:LimeGamepadButton):Void
   {
     var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
 
     var buttonListEntry = _buttonList.get(gamepad.id);
     if (buttonListEntry == null || buttonListEntry.indexOf(buttonId) == -1) return;
 
-    // TODO: Remove this line with SDL3 when timestamps change meaning.
-    // This is because SDL3's timestamps ar e measured in nanoseconds, not milliseconds.
-    timestamp *= Constants.NS_PER_MS;
+    var timestamp:Int64 = getCurrentTimestamp();
 
     updateButtonStates(gamepad, buttonId, true);
 
@@ -355,16 +343,14 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
     }
   }
 
-  function handleButtonUp(gamepad:FlxGamepad, button:LimeGamepadButton, timestamp:Int64):Void
+  function handleButtonUp(gamepad:FlxGamepad, button:LimeGamepadButton):Void
   {
     var buttonId:FlxGamepadInputID = FlxGamepadUtil.getInputID(gamepad, button);
 
     var buttonListEntry = _buttonList.get(gamepad.id);
     if (buttonListEntry == null || buttonListEntry.indexOf(buttonId) == -1) return;
 
-    // TODO: Remove this line with SDL3 when timestamps change meaning.
-    // This is because SDL3's timestamps ar e measured in nanoseconds, not milliseconds.
-    timestamp *= Constants.NS_PER_MS;
+    var timestamp:Int64 = getCurrentTimestamp();
 
     updateButtonStates(gamepad, buttonId, false);
 
@@ -401,10 +387,15 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
 
     for (gamepad in _deviceBinds.keys())
     {
-      var callbacks = _deviceBinds.get(gamepad);
       var limeGamepad = FlxGamepadUtil.getLimeGamepad(gamepad);
-      limeGamepad.onButtonDownPrecise.remove(callbacks.onButtonDown);
-      limeGamepad.onButtonUpPrecise.remove(callbacks.onButtonUp);
+
+      limeGamepad.onButtonDown.remove(function(button:LimeGamepadButton):Void {
+        handleButtonDown(gamepad, button);
+      });
+
+      limeGamepad.onButtonUp.remove(function(button:LimeGamepadButton):Void {
+        handleButtonUp(gamepad, button);
+      });
     }
     _deviceBinds.clear();
   }
@@ -412,8 +403,8 @@ class PreciseInputManager extends FlxKeyManager<FlxKey, PreciseInputList>
   public override function destroy():Void
   {
     // Keyboard
-    FlxG.stage.application.window.onKeyDownPrecise.remove(handleKeyDown);
-    FlxG.stage.application.window.onKeyUpPrecise.remove(handleKeyUp);
+    FlxG.stage.application.window.onKeyDown.remove(handleKeyDown);
+    FlxG.stage.application.window.onKeyUp.remove(handleKeyUp);
 
     clearKeys();
     clearButtons();

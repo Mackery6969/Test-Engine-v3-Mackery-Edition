@@ -130,10 +130,10 @@ class Save
         {
           practice: false,
           botPlay: false,
-          songSpeed: 1.0,
+          songSpeed: 100,
           instaDeathMode: 'None',
-          healthGain: 1.0,
-          healthLoss: 1.0,
+          healthGain: 100,
+          healthLoss: 100,
           healthDrainType: 'None',
           healthDrainAmount: 0.02,
         },
@@ -1435,9 +1435,9 @@ typedef SaveDataModifiers =
 
   /**
    * The speed of the song.
-   * @default '1.0'
+   * @default '100'
    */
-  var songSpeed:Float;
+  var songSpeed:Int;
 
   /**
    * The type of instant death, theres None, SFC, GFC, and FC)
@@ -1447,15 +1447,15 @@ typedef SaveDataModifiers =
 
   /**
    * The multiplier of health gained.
-   * @default '1.0'
+   * @default '100'
    */
-  var healthGain:Float;
+  var healthGain:Int;
 
   /**
    * The multiplier of health lost.
-   * @default '1.0'
+   * @default '100'
    */
-  var healthLoss:Float;
+  var healthLoss:Int;
 
   /**
    * The type of health drain, theres None, Penalty, Fair Fight, and Constant.

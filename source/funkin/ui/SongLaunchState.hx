@@ -19,8 +19,8 @@ import funkin.ui.AtlasText.AtlasFont;
 import funkin.play.song.Song;
 import funkin.ui.freeplay.FreeplayState;
 import funkin.ui.story.StoryMenuState;
-import funkin.data.story.level.LevelRegistry;
 import funkin.data.song.SongRegistry;
+import funkin.save.Save;
 
 typedef DefaultPreferences =
 {
@@ -70,10 +70,10 @@ class SongLaunchState extends MusicBeatState
     {
       practice: false,
       botPlay: false,
-      songSpeed: 1.0,
+      songSpeed: 100.0,
       instaDeathMode: 'None',
-      healthGain: 1.0,
-      healthLoss: 1.0,
+      healthGain: 100.0,
+      healthLoss: 100.0,
       healthDrainType: 'None',
       healthDrainAmount: 0.02
     };
@@ -231,39 +231,45 @@ class SongLaunchState extends MusicBeatState
 
     createConfItemCheckbox('Practice Mode', function(value:Bool):Void {
       Preferences.practice = value;
+      saveOption("practice", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.practice);
 
     createConfItemCheckbox('BotPlay', function(value:Bool):Void {
       Preferences.botPlay = value;
+      saveOption("botPlay", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.botPlay);
 
     createConfItemPercentage('Song Speed', function(value:Int):Void {
-      Preferences.songSpeed = value / 100.0;
+      Preferences.songSpeed = value;
+      saveOption("songSpeed", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
-    }, Std.int(Preferences.songSpeed * 100), 5, 1000);
+    }, Std.int(Preferences.songSpeed), 5, 1000);
 
     createConfItemEnum('Death Mode', ["None" => "None", "SFC" => "Sick FC", "GFC" => "Good FC", "FC" => "FC"], function(value:String) {
       Preferences.instaDeathMode = value;
+      saveOption("instaDeathMode", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.instaDeathMode);
 
     createConfItemPercentage('Health Gain', function(value:Int):Void {
-      Preferences.healthGain = value / 100.0;
+      Preferences.healthGain = value;
+      saveOption("healthGain", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
-    }, Std.int(Preferences.healthGain * 100), 0, 1000);
+    }, Std.int(Preferences.healthGain), 0, 1000);
 
     createConfItemPercentage('Health Loss', function(value:Int):Void {
-      Preferences.healthLoss = value / 100.0;
+      Preferences.healthLoss = value;
+      saveOption("healthLoss", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
-    }, Std.int(Preferences.healthLoss * 100), 0, 1000);
+    }, Std.int(Preferences.healthLoss), 0, 1000);
 
     createConfItemEnum('Health Drain', [
       "None" => "None",
@@ -272,15 +278,29 @@ class SongLaunchState extends MusicBeatState
       "Constant" => "Constant"
     ], function(value:String) {
       Preferences.healthDrainType = value;
+      saveOption("healthDrainType", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.healthDrainType);
 
     createConfItemDecimal('Health Drain Amount', function(value:Float) {
       Preferences.healthDrainAmount = value;
+      saveOption("healthDrainAmount", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
-    }, null, Preferences.healthDrainAmount, 0.005, 1, 0.0005, 3);
+    }, null, Preferences.healthDrainAmount, 0.005, 1, 0.0005, 4);
+  }
+
+  /**
+   * Saves the options for a modifier.
+   * @param key The modifier.
+   * @param value The new value of the modifier.
+   */
+  function saveOption(key:String, value:Any):Void
+  {
+    var save:Save = Save.instance;
+    Reflect.setField(save.modifiers, key, value); // Use reflection to set fields dynamically
+    save.flush(); // Immediately flush changes to ensure they persist
   }
 
   override function update(elapsed:Float):Void
@@ -426,7 +446,7 @@ class SongLaunchState extends MusicBeatState
           targetVariation: targetVariation,
           practiceMode: Preferences.practice,
           botPlayMode: Preferences.botPlay,
-          playbackRate: Preferences.songSpeed,
+          playbackRate: Preferences.songSpeed / 100,
         }, true);
     }
     else
@@ -444,7 +464,7 @@ class SongLaunchState extends MusicBeatState
           practiceMode: Preferences.practice,
           minimalMode: false,
           botPlayMode: Preferences.botPlay,
-          playbackRate: Preferences.songSpeed,
+          playbackRate: Preferences.songSpeed / 100,
         }, true);
     }
   }

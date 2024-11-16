@@ -73,30 +73,12 @@ class TitleState extends MusicBeatState
     if (!initialized)
     {
       new FlxTimer().start(1, function(tmr:FlxTimer) {
-        // load flashing garbage
-        if (!Preferences.seenFlashingState)
-        {
-          trace('opening flashing state...');
-          FlxG.switchState(() -> new FlashingState());
-        }
-        else
-        {
-          startIntro();
-        }
+        startIntro();
       });
     }
     else
     {
-      // load flashing garbage
-      if (!Preferences.seenFlashingState)
-      {
-        trace('opening flashing state...');
-        FlxG.switchState(() -> new FlashingState());
-      }
-      else
-      {
-        startIntro();
-      }
+      startIntro();
     }
   }
 
@@ -351,7 +333,14 @@ class TitleState extends MusicBeatState
     // If you spam Enter, we should skip the transition.
     if (pressedEnter && transitioning && skippedIntro)
     {
-      FlxG.switchState(() -> new MainMenuState());
+      if (Preferences.seenFlashingState)
+      {
+        FlxG.switchState(() -> new MainMenuState());
+      }
+      else
+      {
+        FlxG.switchState(() -> new FlashingState());
+      }
     }
 
     if (pressedEnter && !transitioning && skippedIntro)

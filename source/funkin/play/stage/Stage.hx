@@ -25,6 +25,7 @@ import funkin.data.stage.StageRegistry;
 import funkin.play.stage.StageProp;
 import funkin.util.SortUtil;
 import funkin.util.assets.FlxAnimationUtil;
+import funkin.Preferences;
 
 typedef StagePropGroup = FlxTypedSpriteGroup<StageProp>;
 
@@ -512,6 +513,26 @@ class Stage extends FlxSpriteGroup implements IPlayStateScriptedClass implements
   public inline function getDadPosition():FlxPoint
   {
     return new FlxPoint(_data.characters.dad.position[0], _data.characters.dad.position[1]);
+  }
+
+  /**
+   * Removes a character from the stage by ID.
+   * @param characterId The ID of the character to remove.
+   */
+  public function removeCharacter(characterId:String):Void
+  {
+    var character:BaseCharacter = getCharacter(characterId);
+    if (character != null)
+    {
+      this.remove(character, true); // Remove from display list
+      character.kill();
+      character.destroy();
+      this.characters.remove(characterId); // Remove from characters map
+    }
+    else
+    {
+      trace("Character with ID " + characterId + " not found.");
+    }
   }
 
   /**

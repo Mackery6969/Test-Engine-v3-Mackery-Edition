@@ -366,14 +366,14 @@ class Preferences
     return value;
   }
 
-  public static var songSpeed(get, set):Float;
+  public static var songSpeed(get, set):Int;
 
-  static function get_songSpeed():Float
+  static function get_songSpeed():Int
   {
     return Save?.instance?.modifiers?.songSpeed;
   }
 
-  static function set_songSpeed(value:Float):Float
+  static function set_songSpeed(value:Int):Int
   {
     var save:Save = Save.instance;
     save.modifiers.songSpeed = value;
@@ -396,14 +396,14 @@ class Preferences
     return value;
   }
 
-  public static var healthGain(get, set):Float;
+  public static var healthGain(get, set):Int;
 
-  static function get_healthGain():Float
+  static function get_healthGain():Int
   {
     return Save?.instance?.modifiers?.healthGain;
   }
 
-  static function set_healthGain(value:Float):Float
+  static function set_healthGain(value:Int):Int
   {
     var save:Save = Save.instance;
     save.modifiers.healthGain = value;
@@ -411,14 +411,14 @@ class Preferences
     return value;
   }
 
-  public static var healthLoss(get, set):Float;
+  public static var healthLoss(get, set):Int;
 
-  static function get_healthLoss():Float
+  static function get_healthLoss():Int
   {
     return Save?.instance?.modifiers?.healthLoss;
   }
 
-  static function set_healthLoss(value:Float):Float
+  static function set_healthLoss(value:Int):Int
   {
     var save:Save = Save.instance;
     save.modifiers.healthLoss = value;

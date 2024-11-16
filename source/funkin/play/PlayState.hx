@@ -223,7 +223,7 @@ class PlayState extends MusicBeatSubState
    * Play back the song at this speed.
    * @default `1.0` for normal speed.
    */
-  public var playbackRate:Float = 1.0;
+  public var playbackRate:Float = Preferences.songSpeed;
 
   /**
    * An empty FlxObject contained in the scene.
@@ -316,13 +316,13 @@ class PlayState extends MusicBeatSubState
    * Whether the game is currently in Practice Mode.
    * If true, player will not lose gain or lose score from notes.
    */
-  public var isPracticeMode:Bool = false;
+  public var isPracticeMode:Bool = Preferences.botPlay;
 
   /**
    * Whether the game is currently in Bot Play Mode.
    * If true, player will not lose gain or lose score from notes.
    */
-  public var isBotPlayMode:Bool = false;
+  public var isBotPlayMode:Bool = Preferences.botPlay;
 
   /**
    * Whether the player has dropped below zero health,
@@ -3272,6 +3272,7 @@ class PlayState extends MusicBeatSubState
   {
     // If the camera is being tweened, stop it.
     cancelAllCameraTweens();
+    // FlxTween.clearTweens(this); // Clears tweens associated with PlayState
 
     // Dispatch the destroy event.
     dispatchEvent(new ScriptEvent(DESTROY, false));
@@ -3311,6 +3312,7 @@ class PlayState extends MusicBeatSubState
     // Remove reference to stage and remove sprites from it to save memory.
     if (currentStage != null)
     {
+      // currentStage.disposeStageAssets();
       remove(currentStage);
       currentStage.kill();
       currentStage = null;
@@ -3478,6 +3480,67 @@ class PlayState extends MusicBeatSubState
   {
     cameraFollowPoint.setPosition(x, y);
     tweenCameraToFollowPoint(duration, ease);
+  }
+
+  /**
+     * Shakes the camHUD to the desired amount
+     */
+  public function shakeCamera(?duration:Float, ?intensity:Float):Void
+  {
+    FlxG.cameras.shake(intensity, duration); // shakes with intensity 0.02 for 0.5 seconds
+  }
+
+  /**
+     * Switches the current character to a new one.
+     * @param characterType can be either 'boyfriend', 'girlfriend', or 'dad'
+     * @param newCharacterId the name of the character file
+     */
+  public function switchCharacter(characterType:String, newCharacterId:String):Void
+  {
+    // Step 1: Fetch new character data based on the provided ID
+    var newCharacter:BaseCharacter = CharacterDataParser.fetchCharacter(newCharacterId);
+    if (newCharacter == null)
+    {
+      trace("Error: Could not load character with ID " + newCharacterId);
+      return;
+    }
+
+    // Step 2: Replace the current character based on the character type
+    switch (characterType)
+    {
+      case "boyfriend":
+        if (currentStage != null && currentStage.getCharacter("bf") != null)
+        {
+          currentStage.removeCharacter("bf"); // Pass ID "bf" directly
+        }
+        currentStage.addCharacter(newCharacter, BF);
+        // boyfriend = newCharacter; // Ensure `boyfriend` is defined in the class
+        trace("Switched boyfriend to " + newCharacterId);
+
+      case "dad":
+        if (currentStage != null && currentStage.getCharacter("dad") != null)
+        {
+          currentStage.removeCharacter("dad"); // Pass ID "dad" directly
+        }
+        currentStage.addCharacter(newCharacter, DAD);
+        // dad = newCharacter; // Ensure `dad` is defined in the class
+        trace("Switched dad to " + newCharacterId);
+
+      case "girlfriend":
+        if (currentStage != null && currentStage.getCharacter("gf") != null)
+        {
+          currentStage.removeCharacter("gf"); // Pass ID "gf" directly
+        }
+        currentStage.addCharacter(newCharacter, GF);
+        // girlfriend = newCharacter; // Ensure `girlfriend` is defined in the class
+        trace("Switched girlfriend to " + newCharacterId);
+
+      default:
+        trace("Error: Unknown character type " + characterType);
+    }
+
+    // Refresh the stage to apply the changes
+    currentStage.refresh();
   }
 
   /**

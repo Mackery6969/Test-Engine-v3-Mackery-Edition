@@ -93,15 +93,22 @@ class Save
         {
           // Reasonable defaults.
           framerate: 60,
+          quality: 'High',
           naughtyness: true,
           downscroll: false,
+          ghostTapping: true,
           flashingLights: true,
+          oldScoreText: false,
           zoomCamera: true,
           debugDisplay: false,
           autoPause: true,
+          songLaunchScreen: true,
+          instrumentalSelect: false,
           inputOffset: 0,
           audioVisualOffset: 0,
           unlockedFramerate: false,
+
+          seenFlashingState: false,
 
           controls:
             {
@@ -119,6 +126,18 @@ class Save
             },
         },
 
+      modifiers:
+        {
+          botPlay: false,
+          practice: false,
+          songSpeed: 100,
+          instaDeathMode: 'None',
+          healthGain: 100,
+          healthLoss: 100,
+          healthDrainType: 'None',
+          healthDrainAmount: 0.02,
+        },
+
       mods:
         {
           // No mods enabled.
@@ -129,7 +148,7 @@ class Save
       unlocks:
         {
           // Default to having seen the default character.
-          charactersSeen: ["bf"],
+          charactersSeen: ["bf", "pico"],
           oldChar: false
         },
 
@@ -166,6 +185,16 @@ class Save
   function get_options():SaveDataOptions
   {
     return data.options;
+  }
+
+  /**
+   * NOTE: Modifications will not be saved without calling `Save.flush()`!
+   */
+  public var modifiers(get, never):SaveDataModifiers;
+
+  function get_modifiers():SaveDataModifiers
+  {
+    return data.modifiers;
   }
 
   /**
@@ -1148,6 +1177,8 @@ typedef RawSaveData =
    */
   var options:SaveDataOptions;
 
+  var modifiers:SaveDataModifiers;
+
   var unlocks:SaveDataUnlocks;
 
   /**
@@ -1275,6 +1306,8 @@ typedef SaveDataOptions =
    */
   var framerate:Int;
 
+  var quality:String;
+
   /**
    * Whether some particularly foul language is displayed.
    * @default `true`
@@ -1287,11 +1320,15 @@ typedef SaveDataOptions =
    */
   var downscroll:Bool;
 
+  var ghostTapping:Bool;
+
   /**
    * If disabled, flashing lights in the main menu and other areas will be less intense.
    * @default `true`
    */
   var flashingLights:Bool;
+
+  var oldScoreText:Bool;
 
   /**
    * If disabled, the camera bump synchronized to the beat.
@@ -1311,6 +1348,10 @@ typedef SaveDataOptions =
    */
   var autoPause:Bool;
 
+  var songLaunchScreen:Bool;
+
+  var instrumentalSelect:Bool;
+
   /**
    * Offset the user's inputs by this many ms.
    * @default `0`
@@ -1329,6 +1370,12 @@ typedef SaveDataOptions =
    */
   var unlockedFramerate:Bool;
 
+  /**
+   * if the flashing state has been seen, we dont want trouble before you even enable it..
+   * @default 'false'
+   */
+  var seenFlashingState:Bool;
+
   var controls:
     {
       var p1:
@@ -1342,6 +1389,28 @@ typedef SaveDataOptions =
           var gamepad:SaveControlsData;
         };
     };
+};
+
+/**
+ * see SongLaunchState.
+ */
+typedef SaveDataModifiers =
+{
+  var botPlay:Bool;
+
+  var practice:Bool;
+
+  var songSpeed:Int;
+
+  var instaDeathMode:String;
+
+  var healthGain:Int;
+
+  var healthLoss:Int;
+
+  var healthDrainType:String;
+
+  var healthDrainAmount:Float;
 };
 
 /**

@@ -318,7 +318,14 @@ class TitleState extends MusicBeatState
     // If you spam Enter, we should skip the transition.
     if (pressedEnter && transitioning && skippedIntro)
     {
-      FlxG.switchState(() -> new MainMenuState());
+      if (Preferences.seenFlashingState)
+      {
+        FlxG.switchState(() -> new MainMenuState());
+      }
+      else
+      {
+        FlxG.switchState(() -> new FlashingState());
+      }
     }
 
     if (pressedEnter && !transitioning && skippedIntro)

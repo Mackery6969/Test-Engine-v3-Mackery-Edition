@@ -3349,6 +3349,67 @@ class PlayState extends MusicBeatSubState
   }
 
   /**
+     * Shakes the camHUD to the desired amount
+     */
+  public function shakeCamera(?duration:Float, ?intensity:Float):Void
+  {
+    FlxG.cameras.shake(intensity, duration); // shakes with intensity 0.02 for 0.5 seconds
+  }
+
+  /**
+     * Switches the current character to a new one.
+     * @param characterType can be either 'boyfriend', 'girlfriend', or 'dad'
+     * @param newCharacterId the name of the character file
+     */
+  public function switchCharacter(characterType:String, newCharacterId:String):Void
+  {
+    // Step 1: Fetch new character data based on the provided ID
+    var newCharacter:BaseCharacter = CharacterDataParser.fetchCharacter(newCharacterId);
+    if (newCharacter == null)
+    {
+      trace("Error: Could not load character with ID " + newCharacterId);
+      return;
+    }
+
+    // Step 2: Replace the current character based on the character type
+    switch (characterType)
+    {
+      case "boyfriend":
+        if (currentStage != null && currentStage.getCharacter("bf") != null)
+        {
+          currentStage.removeCharacter("bf"); // Pass ID "bf" directly
+        }
+        currentStage.addCharacter(newCharacter, BF);
+        // boyfriend = newCharacter; // Ensure `boyfriend` is defined in the class
+        trace("Switched boyfriend to " + newCharacterId);
+
+      case "dad":
+        if (currentStage != null && currentStage.getCharacter("dad") != null)
+        {
+          currentStage.removeCharacter("dad"); // Pass ID "dad" directly
+        }
+        currentStage.addCharacter(newCharacter, DAD);
+        // dad = newCharacter; // Ensure `dad` is defined in the class
+        trace("Switched dad to " + newCharacterId);
+
+      case "girlfriend":
+        if (currentStage != null && currentStage.getCharacter("gf") != null)
+        {
+          currentStage.removeCharacter("gf"); // Pass ID "gf" directly
+        }
+        currentStage.addCharacter(newCharacter, GF);
+        // girlfriend = newCharacter; // Ensure `girlfriend` is defined in the class
+        trace("Switched girlfriend to " + newCharacterId);
+
+      default:
+        trace("Error: Unknown character type " + characterType);
+    }
+
+    // Refresh the stage to apply the changes
+    currentStage.refresh();
+  }
+
+  /**
      * Disables camera following and tweens the camera to the follow point manually.
      */
   public function tweenCameraToFollowPoint(?duration:Float, ?ease:Null<Float->Float>):Void

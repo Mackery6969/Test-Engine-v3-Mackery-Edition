@@ -40,6 +40,25 @@ class Preferences
    * Whether some particularly foul language is displayed.
    * @default `true`
    */
+  public static var quality(get, set):String;
+
+  static function get_quality():String
+  {
+    return Save?.instance?.options?.quality;
+  }
+
+  static function set_quality(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.options.quality = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * Whether some particularly foul language is displayed.
+   * @default `true`
+   */
   public static var naughtyness(get, set):Bool;
 
   static function get_naughtyness():Bool
@@ -75,6 +94,25 @@ class Preferences
   }
 
   /**
+   * If enabled, pressing a note when none is there wont count as a miss.
+   * @default `true`
+   */
+  public static var ghostTapping(get, set):Bool;
+
+  static function get_ghostTapping():Bool
+  {
+    return Save?.instance?.options?.ghostTapping;
+  }
+
+  static function set_ghostTapping(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.ghostTapping = value;
+    save.flush();
+    return value;
+  }
+
+  /**
    * If disabled, flashing lights in the main menu and other areas will be less intense.
    * @default `true`
    */
@@ -89,6 +127,25 @@ class Preferences
   {
     var save:Save = Save.instance;
     save.options.flashingLights = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * If enabled, the score text will be unchanged from the original game!
+   * @default `false`
+   */
+  public static var oldScoreText(get, set):Bool;
+
+  static function get_oldScoreText():Bool
+  {
+    return Save?.instance?.options?.oldScoreText ?? true;
+  }
+
+  static function set_oldScoreText(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.oldScoreText = value;
     save.flush();
     return value;
   }
@@ -157,6 +214,44 @@ class Preferences
     return value;
   }
 
+  /**
+   * If enabled, when selecting a week or song, you will be sent to a state to select modifiers.
+   * @default `true`
+   */
+  public static var songLaunchScreen(get, set):Bool;
+
+  static function get_songLaunchScreen():Bool
+  {
+    return Save?.instance?.options?.songLaunchScreen;
+  }
+
+  static function set_songLaunchScreen(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.songLaunchScreen = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * If enabled, when selecting a week or song, you will be sent to a state to select modifiers.
+   * @default `true`
+   */
+  public static var instrumentalSelect(get, set):Bool;
+
+  static function get_instrumentalSelect():Bool
+  {
+    return Save?.instance?.options?.instrumentalSelect;
+  }
+
+  static function set_instrumentalSelect(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.instrumentalSelect = value;
+    save.flush();
+    return value;
+  }
+
   public static var unlockedFramerate(get, set):Bool;
 
   static function get_unlockedFramerate():Bool
@@ -199,123 +294,6 @@ class Preferences
   public static var lockedFramerateFunction = untyped js.Syntax.code("window.requestAnimationFrame");
   #end
 
-  /**
-   * If enabled, there is no penalty for pressing a note when there is no note there.
-   * @default 'true'
-   */
-  public static var ghostTapping(get, set):Bool;
-
-  static function get_ghostTapping():Bool
-  {
-    return Save?.instance?.options?.ghostTapping;
-  }
-
-  static function set_ghostTapping(value:Bool):Bool
-  {
-    var save:Save = Save.instance;
-    save.options.ghostTapping = value;
-    save.flush();
-    return value;
-  }
-
-  /**
-   * Allows you to select a different instrumental (in old vers it defaulted to true which was VERY annoying)
-   * @default 'false'
-   */
-  public static var instrumentalSelect(get, set):Bool;
-
-  static function get_instrumentalSelect():Bool
-  {
-    return Save?.instance?.options?.instrumentalSelect;
-  }
-
-  static function set_instrumentalSelect(value:Bool):Bool
-  {
-    var save:Save = Save.instance;
-    save.options.instrumentalSelect = value;
-    save.flush();
-    return value;
-  }
-
-  /**
-   * allows the user to select modifiers.
-   * @default 'true'
-   */
-  public static var songLaunchScreen(get, set):Bool;
-
-  static function get_songLaunchScreen():Bool
-  {
-    return Save?.instance?.options?.songLaunchScreen;
-  }
-
-  static function set_songLaunchScreen(value:Bool):Bool
-  {
-    var save:Save = Save.instance;
-    save.options.songLaunchScreen = value;
-    save.flush();
-    return value;
-  }
-
-  /**
-   * The Original Friday Night Funkin' Score text below the health bar.
-   */
-  public static var oldScoreText(get, set):Bool;
-
-  static function get_oldScoreText():Bool
-  {
-    return Save?.instance?.options?.oldScoreText;
-  }
-
-  static function set_oldScoreText(value:Bool):Bool
-  {
-    var save:Save = Save.instance;
-    save.options.oldScoreText = value;
-    save.flush();
-    return value;
-  }
-
-  /**
-   * The quality of the game, setting this to Low disables some objects.
-   * @default 'High'
-   */
-  public static var quality(get, set):String;
-
-  static function get_quality():String
-  {
-    return Save?.instance?.options?.quality;
-  }
-
-  static function set_quality(value:String):String
-  {
-    var save:Save = Save.instance;
-    save.options.quality = value;
-    save.flush();
-    return value;
-  }
-
-  /**
-   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
-   * @default 'normal'
-   */
-  public static var uiSkin(get, set):String;
-
-  static function get_uiSkin():String
-  {
-    return Save?.instance?.options?.uiSkin;
-  }
-
-  static function set_uiSkin(value:String):String
-  {
-    var save:Save = Save.instance;
-    save.options.uiSkin = value;
-    save.flush();
-    return value;
-  }
-
-  /**
-   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
-   * @default 'normal'
-   */
   public static var seenFlashingState(get, set):Bool;
 
   static function get_seenFlashingState():Bool
@@ -336,21 +314,6 @@ class Preferences
     MODIFIERS
     - - - - - -
    */
-  public static var practice(get, set):Bool;
-
-  static function get_practice():Bool
-  {
-    return Save?.instance?.modifiers?.practice;
-  }
-
-  static function set_practice(value:Bool):Bool
-  {
-    var save:Save = Save.instance;
-    save.modifiers.practice = value;
-    save.flush();
-    return value;
-  }
-
   public static var botPlay(get, set):Bool;
 
   static function get_botPlay():Bool
@@ -362,6 +325,21 @@ class Preferences
   {
     var save:Save = Save.instance;
     save.modifiers.botPlay = value;
+    save.flush();
+    return value;
+  }
+
+  public static var practice(get, set):Bool;
+
+  static function get_practice():Bool
+  {
+    return Save?.instance?.modifiers?.practice;
+  }
+
+  static function set_practice(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.modifiers.practice = value;
     save.flush();
     return value;
   }

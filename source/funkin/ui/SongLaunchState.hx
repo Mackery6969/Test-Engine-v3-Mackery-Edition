@@ -229,19 +229,19 @@ class SongLaunchState extends MusicBeatState
       if (!busy) start();
     });
 
-    createConfItemCheckbox('Practice Mode', function(value:Bool):Void {
-      Preferences.practice = value;
-      saveOption("practice", value); // Save change immediately
-      markModifiedOptions();
-      checkModifiers();
-    }, Preferences.practice);
-
     createConfItemCheckbox('BotPlay', function(value:Bool):Void {
       Preferences.botPlay = value;
       saveOption("botPlay", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.botPlay);
+
+    createConfItemCheckbox('Practice Mode', function(value:Bool):Void {
+      Preferences.practice = value;
+      saveOption("practice", value); // Save change immediately
+      markModifiedOptions();
+      checkModifiers();
+    }, Preferences.practice);
 
     createConfItemPercentage('Song Speed', function(value:Int):Void {
       Preferences.songSpeed = value;

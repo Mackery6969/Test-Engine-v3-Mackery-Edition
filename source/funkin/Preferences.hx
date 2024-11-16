@@ -200,6 +200,263 @@ class Preferences
   #end
 
   /**
+   * If enabled, there is no penalty for pressing a note when there is no note there.
+   * @default 'true'
+   */
+  public static var ghostTapping(get, set):Bool;
+
+  static function get_ghostTapping():Bool
+  {
+    return Save?.instance?.options?.ghostTapping;
+  }
+
+  static function set_ghostTapping(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.ghostTapping = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * Allows you to select a different instrumental (in old vers it defaulted to true which was VERY annoying)
+   * @default 'false'
+   */
+  public static var instrumentalSelect(get, set):Bool;
+
+  static function get_instrumentalSelect():Bool
+  {
+    return Save?.instance?.options?.instrumentalSelect;
+  }
+
+  static function set_instrumentalSelect(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.instrumentalSelect = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * allows the user to select modifiers.
+   * @default 'true'
+   */
+  public static var songLaunchScreen(get, set):Bool;
+
+  static function get_songLaunchScreen():Bool
+  {
+    return Save?.instance?.options?.songLaunchScreen;
+  }
+
+  static function set_songLaunchScreen(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.songLaunchScreen = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * The Original Friday Night Funkin' Score text below the health bar.
+   */
+  public static var oldScoreText(get, set):Bool;
+
+  static function get_oldScoreText():Bool
+  {
+    return Save?.instance?.options?.oldScoreText;
+  }
+
+  static function set_oldScoreText(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.oldScoreText = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * The quality of the game, setting this to Low disables some objects.
+   * @default 'High'
+   */
+  public static var quality(get, set):String;
+
+  static function get_quality():String
+  {
+    return Save?.instance?.options?.quality;
+  }
+
+  static function set_quality(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.options.quality = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
+   * @default 'normal'
+   */
+  public static var uiSkin(get, set):String;
+
+  static function get_uiSkin():String
+  {
+    return Save?.instance?.options?.uiSkin;
+  }
+
+  static function set_uiSkin(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.options.uiSkin = value;
+    save.flush();
+    return value;
+  }
+
+  /**
+   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
+   * @default 'normal'
+   */
+  public static var seenFlashingState(get, set):Bool;
+
+  static function get_seenFlashingState():Bool
+  {
+    return Save?.instance?.options?.seenFlashingState;
+  }
+
+  static function set_seenFlashingState(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.seenFlashingState = value;
+    save.flush();
+    return value;
+  }
+
+  /*
+    - - - - - -
+    MODIFIERS
+    - - - - - -
+   */
+  public static var practice(get, set):Bool;
+
+  static function get_practice():Bool
+  {
+    return Save?.instance?.modifiers?.practice;
+  }
+
+  static function set_practice(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.modifiers.practice = value;
+    save.flush();
+    return value;
+  }
+
+  public static var botPlay(get, set):Bool;
+
+  static function get_botPlay():Bool
+  {
+    return Save?.instance?.modifiers?.botPlay;
+  }
+
+  static function set_botPlay(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.modifiers.botPlay = value;
+    save.flush();
+    return value;
+  }
+
+  public static var songSpeed(get, set):Int;
+
+  static function get_songSpeed():Int
+  {
+    return Save?.instance?.modifiers?.songSpeed;
+  }
+
+  static function set_songSpeed(value:Int):Int
+  {
+    var save:Save = Save.instance;
+    save.modifiers.songSpeed = value;
+    save.flush();
+    return value;
+  }
+
+  public static var instaDeathMode(get, set):String;
+
+  static function get_instaDeathMode():String
+  {
+    return Save?.instance?.modifiers?.instaDeathMode;
+  }
+
+  static function set_instaDeathMode(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.modifiers.instaDeathMode = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthGain(get, set):Int;
+
+  static function get_healthGain():Int
+  {
+    return Save?.instance?.modifiers?.healthGain;
+  }
+
+  static function set_healthGain(value:Int):Int
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthGain = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthLoss(get, set):Int;
+
+  static function get_healthLoss():Int
+  {
+    return Save?.instance?.modifiers?.healthLoss;
+  }
+
+  static function set_healthLoss(value:Int):Int
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthLoss = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthDrainType(get, set):String;
+
+  static function get_healthDrainType():String
+  {
+    return Save?.instance?.modifiers?.healthDrainType;
+  }
+
+  static function set_healthDrainType(value:String):String
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthDrainType = value;
+    save.flush();
+    return value;
+  }
+
+  public static var healthDrainAmount(get, set):Float;
+
+  static function get_healthDrainAmount():Float
+  {
+    return Save?.instance?.modifiers?.healthDrainAmount;
+  }
+
+  static function set_healthDrainAmount(value:Float):Float
+  {
+    var save:Save = Save.instance;
+    save.modifiers.healthDrainAmount = value;
+    save.flush();
+    return value;
+  }
+
+  /**
    * Loads the user's preferences from the save data and apply them.
    */
   public static function init():Void

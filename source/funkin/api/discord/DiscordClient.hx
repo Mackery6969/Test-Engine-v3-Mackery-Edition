@@ -7,7 +7,7 @@ import sys.thread.Thread;
 
 class DiscordClient
 {
-  static final CLIENT_ID:String = "816168432860790794";
+  static final CLIENT_ID:String = "1070465254301126666";
 
   public static var instance(get, never):DiscordClient;
   static var _instance:Null<DiscordClient> = null;

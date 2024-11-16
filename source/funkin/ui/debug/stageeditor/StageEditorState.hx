@@ -949,13 +949,10 @@ class StageEditorState extends UIState
 
   function checkOverlaps(spr:FlxSprite):Bool
   {
-    if (FlxG.mouse.overlaps(spr) /*spr.overlapsPoint(FlxG.mouse.getWorldPosition(spr.camera), true, spr.camera) */
+    return (FlxG.mouse.overlaps(spr) /*spr.overlapsPoint(FlxG.mouse.getWorldPosition(spr.camera), true, spr.camera) */
       && Screen.instance != null
-      && !Screen.instance.hasSolidComponentUnderPoint(FlxG.mouse.screenX, FlxG.mouse.screenY)
-      && WindowManager.instance.windows.length == 0) // ik its stupid but maybe I have other cases soon (i did)
-      return true;
-
-    return false;
+      && !Screen.instance.hasSolidComponentUnderPoint(FlxG.mouse.viewX, FlxG.mouse.viewY)
+      && WindowManager.instance.windows.length == 0); // ik its stupid but maybe I have other cases soon (i did);
   }
 
   var sprDependant:Array<MenuItem> = [];

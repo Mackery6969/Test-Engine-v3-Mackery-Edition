@@ -1,6 +1,7 @@
 package funkin.ui.freeplay;
 
 import funkin.ui.freeplay.backcards.*;
+import funkin.ui.SongLaunchState;
 import flixel.addons.transition.FlxTransitionableState;
 import flixel.FlxCamera;
 import flixel.FlxSprite;
@@ -1868,7 +1869,7 @@ class FreeplayState extends MusicBeatSubState
     var altInstrumentalIds:Array<String> = targetSong.listAltInstrumentalIds(targetDifficultyId,
       targetDifficulty?.variation ?? Constants.DEFAULT_VARIATION) ?? [];
 
-    if (altInstrumentalIds.length > 0)
+    if (altInstrumentalIds.length > 0 && Preferences.instrumentalSelect)
     {
       var instrumentalIds = [baseInstrumentalId].concat(altInstrumentalIds);
       openInstrumentalList(cap, instrumentalIds);
@@ -1920,66 +1921,108 @@ class FreeplayState extends MusicBeatSubState
     busy = true;
     letterSort.inputEnabled = false;
 
-    PlayStatePlaylist.isStoryMode = false;
-
-    var targetSongId:String = cap?.freeplayData?.data.id ?? 'unknown';
-    var targetSongNullable:Null<Song> = SongRegistry.instance.fetchEntry(targetSongId);
-    if (targetSongNullable == null)
+    if (Preferences.songLaunchScreen)
     {
-      FlxG.log.warn('WARN: could not find song with id (${targetSongId})');
-      return;
-    }
-    var targetSong:Song = targetSongNullable;
-    var targetVariation:Null<String> = currentVariation;
-    var targetLevelId:Null<String> = cap?.freeplayData?.levelId;
-    PlayStatePlaylist.campaignId = targetLevelId ?? null;
+      var targetSongId:String = cap?.freeplayData?.data.id ?? 'unknown';
+      var targetSongNullable:Null<Song> = SongRegistry.instance.fetchEntry(targetSongId);
+      if (targetSongNullable == null)
+      {
+        FlxG.log.warn('WARN: could not find song with id (${targetSongId})');
+        return;
+      }
+      var targetSong:Song = targetSongNullable;
+      var targetVariation:Null<String> = currentVariation;
+      var targetLevelId:Null<String> = cap?.freeplayData?.levelId;
+      PlayStatePlaylist.campaignId = targetLevelId ?? null;
 
-    var targetDifficulty:Null<SongDifficulty> = targetSong.getDifficulty(currentDifficulty, currentVariation);
-    if (targetDifficulty == null)
+      var targetDifficulty:Null<SongDifficulty> = targetSong.getDifficulty(currentDifficulty, currentVariation);
+      if (targetDifficulty == null)
+      {
+        FlxG.log.warn('WARN: could not find difficulty with id (${currentDifficulty})');
+        return;
+      }
+
+      if (targetInstId == null)
+      {
+        var baseInstrumentalId:String = targetSong?.getBaseInstrumentalId(currentDifficulty, targetDifficulty.variation ?? Constants.DEFAULT_VARIATION) ?? '';
+        targetInstId = baseInstrumentalId;
+      }
+
+      // Visual and audio effects.
+      FunkinSound.playOnce(Paths.sound('confirmMenu'));
+      if (dj != null) dj.confirm();
+
+      grpCapsules.members[curSelected].forcePosition();
+      grpCapsules.members[curSelected].confirm();
+
+      backingCard?.confirm();
+
+      SongLaunchState.curSong = targetSong;
+      SongLaunchState.curDifficulty = currentDifficulty;
+      SongLaunchState.curVariation = currentVariation;
+      SongLaunchState.curInstrumental = targetInstId;
+      new FlxTimer().start(styleData?.getStartDelay(), function(tmr:FlxTimer) {
+        // FunkinSound.emptyPartialQueue();
+
+        Paths.setCurrentLevel(cap?.freeplayData?.levelId);
+        FlxG.switchState(() -> new SongLaunchState(false));
+      });
+    }
+    else
     {
-      FlxG.log.warn('WARN: could not find difficulty with id (${currentDifficulty})');
-      return;
+      PlayStatePlaylist.isStoryMode = false;
+      var targetSongId:String = cap?.freeplayData?.data.id ?? 'unknown';
+      var targetSongNullable:Null<Song> = SongRegistry.instance.fetchEntry(targetSongId);
+      if (targetSongNullable == null)
+      {
+        FlxG.log.warn('WARN: could not find song with id (${targetSongId})');
+        return;
+      }
+      var targetSong:Song = targetSongNullable;
+      var targetVariation:Null<String> = currentVariation;
+      var targetLevelId:Null<String> = cap?.freeplayData?.levelId;
+
+      PlayStatePlaylist.campaignId = targetLevelId ?? null;
+      var targetDifficulty:Null<SongDifficulty> = targetSong.getDifficulty(currentDifficulty, currentVariation);
+
+      if (targetDifficulty == null)
+      {
+        FlxG.log.warn('WARN: could not find difficulty with id (${currentDifficulty})');
+        return;
+      }
+      if (targetInstId == null)
+      {
+        var baseInstrumentalId:String = targetSong?.getBaseInstrumentalId(currentDifficulty, targetDifficulty.variation ?? Constants.DEFAULT_VARIATION) ?? '';
+
+        targetInstId = baseInstrumentalId;
+      }
+      // Visual and audio effects.
+      FunkinSound.playOnce(Paths.sound('confirmMenu'));
+      if (dj != null) dj.confirm();
+      grpCapsules.members[curSelected].forcePosition();
+      grpCapsules.members[curSelected].confirm();
+      backingCard?.confirm();
+      new FlxTimer().start(styleData?.getStartDelay(), function(tmr:FlxTimer) {
+        FunkinSound.emptyPartialQueue();
+
+        Paths.setCurrentLevel(cap?.freeplayData?.levelId);
+        LoadingState.loadPlayState(
+          {
+            targetSong: targetSong,
+            targetDifficulty: currentDifficulty,
+            targetVariation: currentVariation,
+            targetInstrumental: targetInstId,
+            practiceMode: false,
+            minimalMode: false,
+
+            botPlayMode: false,
+            // TODO: Make these an option! It's currently only accessible via chart editor.
+            // startTimestamp: 0.0,
+            // playbackRate: 0.5,
+            // botPlayMode: true,
+          }, true);
+      });
     }
-
-    if (targetInstId == null)
-    {
-      var baseInstrumentalId:String = targetSong?.getBaseInstrumentalId(currentDifficulty, targetDifficulty.variation ?? Constants.DEFAULT_VARIATION) ?? '';
-      targetInstId = baseInstrumentalId;
-    }
-
-    // Visual and audio effects.
-    FunkinSound.playOnce(Paths.sound('confirmMenu'));
-    if (dj != null) dj.confirm();
-
-    grpCapsules.members[curSelected].forcePosition();
-    grpCapsules.members[curSelected].confirm();
-
-    backingCard?.confirm();
-
-    new FlxTimer().start(styleData?.getStartDelay(), function(tmr:FlxTimer) {
-      FunkinSound.emptyPartialQueue();
-
-      Paths.setCurrentLevel(cap?.freeplayData?.levelId);
-      LoadingState.loadPlayState(
-        {
-          targetSong: targetSong,
-          targetDifficulty: currentDifficulty,
-          targetVariation: currentVariation,
-          targetInstrumental: targetInstId,
-          practiceMode: false,
-          minimalMode: false,
-
-          #if FEATURE_DEBUG_FUNCTIONS
-          botPlayMode: FlxG.keys.pressed.SHIFT,
-          #else
-          botPlayMode: false,
-          #end
-          // TODO: Make these an option! It's currently only accessible via chart editor.
-          // startTimestamp: 0.0,
-          // playbackRate: 0.5,
-          // botPlayMode: true,
-        }, true);
-    });
   }
 
   function refreshCapsuleDisplays():Void

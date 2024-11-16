@@ -14,7 +14,7 @@ import funkin.ui.options.items.CheckboxPreferenceItem;
 import funkin.ui.options.items.NumberPreferenceItem;
 import funkin.ui.options.items.EnumPreferenceItem;
 
-class PreferencesMenu extends Page
+class EngineOptionsMenu extends Page
 {
   var items:TextMenuList;
   var preferenceItems:FlxTypedSpriteGroup<FlxSprite>;
@@ -54,34 +54,30 @@ class PreferencesMenu extends Page
    */
   function createPrefItems():Void
   {
-    createPrefItemCheckbox('Naughtyness', 'Toggle displaying raunchy content', function(value:Bool):Void {
-      Preferences.naughtyness = value;
-    }, Preferences.naughtyness);
-    createPrefItemCheckbox('Downscroll', 'Enable to make notes move downwards', function(value:Bool):Void {
-      Preferences.downscroll = value;
-    }, Preferences.downscroll);
-    createPrefItemCheckbox('Flashing Lights', 'Disable to dampen flashing effects', function(value:Bool):Void {
-      Preferences.flashingLights = value;
-    }, Preferences.flashingLights);
-    createPrefItemCheckbox('Camera Zooming on Beat', 'Disable to stop the camera bouncing to the song', function(value:Bool):Void {
-      Preferences.zoomCamera = value;
-    }, Preferences.zoomCamera);
-    createPrefItemCheckbox('Debug Display', 'Enable to show FPS and other debug stats', function(value:Bool):Void {
-      Preferences.debugDisplay = value;
-    }, Preferences.debugDisplay);
-    createPrefItemCheckbox('Auto Pause', 'Automatically pause the game when it loses focus', function(value:Bool):Void {
-      Preferences.autoPause = value;
-    }, Preferences.autoPause);
-
-    #if web
-    createPrefItemCheckbox('Unlocked Framerate', 'Enable to unlock the framerate', function(value:Bool):Void {
-      Preferences.unlockedFramerate = value;
-    }, Preferences.unlockedFramerate);
-    #else
-    createPrefItemNumber('FPS', 'The maximum framerate that the game targets', function(value:Float) {
-      Preferences.framerate = Std.int(value);
-    }, null, Preferences.framerate, 30, 300, 5, 0);
-    #end
+    createPrefItemCheckbox('Ghost Tapping', 'Toggle Ghost Tapping (no penalty for pressing a note when none is there)', function(value:Bool):Void {
+      Preferences.ghostTapping = value;
+    }, Preferences.ghostTapping);
+    createPrefItemCheckbox('Old Score Text',
+      'Toggles the use of the original score text in Friday Night Funkin\', the engine revamps how it works when disabled.', function(value:Bool):Void {
+        Preferences.oldScoreText = value;
+    }, Preferences.oldScoreText);
+    createPrefItemCheckbox('Instrumental Selector',
+      '(Only works if you have Pico unlocked.) if enabled it will let you select what Instrumental on a song you want.', function(value:Bool):Void {
+        Preferences.instrumentalSelect = value;
+    }, Preferences.instrumentalSelect);
+    createPrefItemCheckbox('Song Modifier Select',
+      'Opens a menu upon song select allowing you to choose modifiers (having a modifier will most likely disable highscore, you can check if so by the "*" at the end of the name) if enabled',
+      function(value:Bool):Void {
+        Preferences.songLaunchScreen = value;
+      }, Preferences.songLaunchScreen);
+    createPrefItemEnum('Quality', 'Allows you to change the quality of the backgrounds, useful on slower computers.',
+      ['Low' => "Low Quality", 'High' => "High/Medium Quality"], function(value:String):Void {
+        Preferences.quality = value;
+    }, Preferences.quality);
+    createPrefItemEnum('UI Skin', 'Choose a skin for the UI (eg, shit, bad, good, shit)', ['default' => 'Normal', 'alt' => 'Alternate'],
+      function(value:String):Void {
+        Preferences.uiSkin = value;
+      }, Preferences.uiSkin);
   }
 
   override function update(elapsed:Float):Void

@@ -24,6 +24,8 @@ import funkin.ui.transition.LoadingState;
 import funkin.ui.transition.StickerSubState;
 import funkin.util.MathUtil;
 import openfl.utils.Assets;
+import funkin.ui.SongLaunchState;
+import funkin.Preferences;
 #if FEATURE_DISCORD_RPC
 import funkin.api.discord.DiscordClient;
 #end
@@ -559,18 +561,34 @@ class StoryMenuState extends MusicBeatState
 
     Highscore.talliesLevel = new funkin.Highscore.Tallies();
 
+    var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
+
     new FlxTimer().start(1, function(tmr:FlxTimer) {
       FlxTransitionableState.skipNextTransIn = false;
       FlxTransitionableState.skipNextTransOut = false;
+      if (Preferences.songLaunchScreen)
+      {
+        // var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
 
-      var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
+        SongLaunchState.weekSongIds = currentLevel.getSongs();
+        // SongLaunchState.isStoryMode = true;
+        // SongLaunchState.campaignScore = 0;
 
-      LoadingState.loadPlayState(
-        {
-          targetSong: targetSong,
-          targetDifficulty: PlayStatePlaylist.campaignDifficulty,
-          targetVariation: targetVariation
-        }, true);
+        SongLaunchState.curWeekId = currentLevel.id;
+        SongLaunchState.curWeek = currentLevel.getTitle();
+        SongLaunchState.curDifficulty = currentDifficultyId;
+
+        FlxG.switchState(() -> new SongLaunchState(true));
+      }
+      else
+      {
+        LoadingState.loadPlayState(
+          {
+            targetSong: targetSong,
+            targetDifficulty: PlayStatePlaylist.campaignDifficulty,
+            targetVariation: targetVariation
+          }, true);
+      }
     });
   }
 

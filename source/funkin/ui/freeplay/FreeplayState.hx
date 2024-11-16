@@ -54,6 +54,8 @@ import funkin.util.SortUtil;
 import openfl.display.BlendMode;
 import funkin.data.freeplay.style.FreeplayStyleRegistry;
 import funkin.data.song.SongData.SongMusicData;
+import funkin.ui.SongLaunchState;
+import funkin.Preferences;
 #if FEATURE_DISCORD_RPC
 import funkin.api.discord.DiscordClient;
 #end
@@ -1868,7 +1870,7 @@ class FreeplayState extends MusicBeatSubState
     var altInstrumentalIds:Array<String> = targetSong.listAltInstrumentalIds(targetDifficultyId,
       targetDifficulty?.variation ?? Constants.DEFAULT_VARIATION) ?? [];
 
-    if (altInstrumentalIds.length > 0)
+    if (altInstrumentalIds.length > 0 && Preferences.instrumentalSelect)
     {
       var instrumentalIds = [baseInstrumentalId].concat(altInstrumentalIds);
       openInstrumentalList(cap, instrumentalIds);
@@ -1957,28 +1959,41 @@ class FreeplayState extends MusicBeatSubState
     backingCard?.confirm();
 
     new FlxTimer().start(styleData?.getStartDelay(), function(tmr:FlxTimer) {
-      FunkinSound.emptyPartialQueue();
+      if (Preferences.songLaunchScreen)
+      {
+        SongLaunchState.curSong = targetSong;
+        SongLaunchState.curDifficulty = currentDifficulty;
+        SongLaunchState.curVariation = currentVariation;
+        SongLaunchState.curInstrumental = targetInstId;
+        // FunkinSound.emptyPartialQueue();
 
-      Paths.setCurrentLevel(cap?.freeplayData?.levelId);
-      LoadingState.loadPlayState(
-        {
-          targetSong: targetSong,
-          targetDifficulty: currentDifficulty,
-          targetVariation: currentVariation,
-          targetInstrumental: targetInstId,
-          practiceMode: false,
-          minimalMode: false,
+        // Paths.setCurrentLevel(cap?.freeplayData?.levelId);
+        FlxG.switchState(() -> new SongLaunchState(false));
+      }
+      else
+      {
+        FunkinSound.emptyPartialQueue();
+        Paths.setCurrentLevel(cap?.freeplayData?.levelId);
+        LoadingState.loadPlayState(
+          {
+            targetSong: targetSong,
+            targetDifficulty: currentDifficulty,
+            targetVariation: currentVariation,
+            targetInstrumental: targetInstId,
+            practiceMode: false,
+            minimalMode: false,
 
-          #if FEATURE_DEBUG_FUNCTIONS
-          botPlayMode: FlxG.keys.pressed.SHIFT,
-          #else
-          botPlayMode: false,
-          #end
-          // TODO: Make these an option! It's currently only accessible via chart editor.
-          // startTimestamp: 0.0,
-          // playbackRate: 0.5,
-          // botPlayMode: true,
-        }, true);
+            #if FEATURE_DEBUG_FUNCTIONS
+            botPlayMode: FlxG.keys.pressed.SHIFT,
+            #else
+            botPlayMode: false,
+            #end
+            // TODO: Make these an option! It's currently only accessible via chart editor.
+            // startTimestamp: 0.0,
+            // playbackRate: 0.5,
+            // botPlayMode: true,
+          }, true);
+      }
     });
   }
 

@@ -33,7 +33,6 @@ import openfl.net.NetStream;
 import funkin.api.newgrounds.NGio;
 import openfl.display.BlendMode;
 import funkin.save.Save;
-import funkin.ui.title.FlashingState;
 
 #if desktop
 #end
@@ -60,7 +59,6 @@ class TitleState extends MusicBeatState
   override public function create():Void
   {
     super.create();
-
     swagShader = new ColorSwap();
 
     curWacky = FlxG.random.getObject(getIntroTextShit());
@@ -70,16 +68,11 @@ class TitleState extends MusicBeatState
     // DEBUG BULLSHIT
 
     // netConnection.addEventListener(MouseEvent.MOUSE_DOWN, overlay_onMouseDown);
-    if (!initialized)
-    {
-      new FlxTimer().start(1, function(tmr:FlxTimer) {
-        startIntro();
-      });
-    }
-    else
-    {
+    if (!initialized) new FlxTimer().start(1, function(tmr:FlxTimer) {
       startIntro();
-    }
+    });
+    else
+      startIntro();
   }
 
   function client_onMetaData(metaData:Dynamic)
@@ -275,14 +268,6 @@ class TitleState extends MusicBeatState
     if (FlxG.keys.pressed.DOWN) FlxG.sound.music.pitch -= 0.5 * elapsed;
     #end
 
-    #if debug
-    if (FlxG.keys.justPressed.L)
-    {
-      trace('opening flashing state...');
-      FlxG.switchState(() -> new FlashingState());
-    }
-    #end
-
     #if desktop
     if (FlxG.keys.justPressed.ESCAPE)
     {
@@ -333,14 +318,7 @@ class TitleState extends MusicBeatState
     // If you spam Enter, we should skip the transition.
     if (pressedEnter && transitioning && skippedIntro)
     {
-      if (Preferences.seenFlashingState)
-      {
-        FlxG.switchState(() -> new MainMenuState());
-      }
-      else
-      {
-        FlxG.switchState(() -> new FlashingState());
-      }
+      FlxG.switchState(() -> new MainMenuState());
     }
 
     if (pressedEnter && !transitioning && skippedIntro)
@@ -487,7 +465,7 @@ class TitleState extends MusicBeatState
           switch (i + 1)
           {
             case 1:
-              createCoolText(['The', 'Mackery Crew Inc']);
+              createCoolText(['The', 'Funkin Crew Inc']);
             case 3:
               addMoreText('presents');
             case 4:

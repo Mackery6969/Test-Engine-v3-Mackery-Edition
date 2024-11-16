@@ -139,14 +139,6 @@ typedef StageDataProp =
   var flipY:Bool;
 
   /**
-   * If set to true, will only be loaded if the quality is set to High
-   * @default false
-   */
-  @:optional
-  @:default(false)
-  var isHighQualityOnly:Bool;
-
-  /**
    * Either the scale of the prop as a float, or the [w, h] scale as an array of two floats.
    * Pro tip: On pixel-art levels, save the sprite small and set this value to 6 or so to save memory.
    */
@@ -207,8 +199,8 @@ typedef StageDataProp =
    * Options: "sparrow", "packer"
    * @default "sparrow"
    */
-  @:optional
   @:default("sparrow")
+  @:optional
   var animType:String;
 
   /**

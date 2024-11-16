@@ -98,27 +98,20 @@ class StrumlineNote extends FunkinSprite
   {
     if (noteStyle == null)
     {
-      // Throw an error if NoteStyle is invalid
+      // If you get an exception on this line, check the debug console.
+      // You probably have a parsing error in your note style's JSON file.
       throw "FATAL ERROR: Attempted to initialize PlayState with an invalid NoteStyle.";
     }
 
-    try
-    {
-      noteStyle.applyStrumlineFrames(this);
-      noteStyle.applyStrumlineAnimations(this, this.direction);
+    noteStyle.applyStrumlineFrames(this);
+    noteStyle.applyStrumlineAnimations(this, this.direction);
 
-      var scale = noteStyle.getStrumlineScale();
-      this.scale.set(scale, scale);
-      this.updateHitbox();
-      noteStyle.applyStrumlineOffsets(this);
+    var scale = noteStyle.getStrumlineScale();
+    this.scale.set(scale, scale);
+    this.updateHitbox();
+    noteStyle.applyStrumlineOffsets(this);
 
-      this.playStatic();
-    }
-    catch (e:Dynamic)
-    {
-      trace("Error applying note style: " + e);
-      throw "Failed to initialize StrumlineNote due to invalid assets or NoteStyle configuration.";
-    }
+    this.playStatic();
   }
 
   public function playAnimation(name:String = 'static', force:Bool = false, reversed:Bool = false, startFrame:Int = 0):Void

@@ -508,33 +508,8 @@ class SongRegistry extends BaseRegistry<Song, SongMetadata>
   public function listBaseGameSongIds():Array<String>
   {
     return [
-      "test",
-      "tutorial",
-      "bopeebo",
-      "fresh",
-      "dadbattle",
-      "spookeez",
-      "south",
-      "monster",
-      "pico",
-      "philly-nice",
-      "blammed",
-      "satin-panties",
-      "high",
-      "milf",
-      "cocoa",
-      "eggnog",
-      "winter-horrorland",
-      "senpai",
-      "roses",
-      "thorns",
-      "ugh",
-      "guns",
-      "stress",
-      "darnell",
-      "lit-up",
-      "2hot",
-      "blazin"
+      "tutorial", "bopeebo", "fresh", "dadbattle", "spookeez", "south", "monster", "pico", "philly-nice", "blammed", "satin-panties", "high", "milf", "cocoa",
+      "eggnog", "winter-horrorland", "senpai", "roses", "thorns", "ugh", "guns", "stress", "darnell", "lit-up", "2hot", "blazin"
     ];
   }
 

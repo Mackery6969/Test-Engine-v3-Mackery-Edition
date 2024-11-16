@@ -1,7 +1,6 @@
 package funkin.ui.story;
 
 import flixel.addons.transition.FlxTransitionableState;
-import funkin.ui.SongLaunchState;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
@@ -544,51 +543,34 @@ class StoryMenuState extends MusicBeatState
       prop.playConfirm();
     }
 
+    Paths.setCurrentLevel(currentLevel.id);
+
+    PlayStatePlaylist.playlistSongIds = currentLevel.getSongs();
+    PlayStatePlaylist.isStoryMode = true;
+    PlayStatePlaylist.campaignScore = 0;
+
+    var targetSongId:String = PlayStatePlaylist.playlistSongIds.shift();
+
+    var targetSong:Song = SongRegistry.instance.fetchEntry(targetSongId);
+
+    PlayStatePlaylist.campaignId = currentLevel.id;
+    PlayStatePlaylist.campaignTitle = currentLevel.getTitle();
+    PlayStatePlaylist.campaignDifficulty = currentDifficultyId;
+
+    Highscore.talliesLevel = new funkin.Highscore.Tallies();
+
     new FlxTimer().start(1, function(tmr:FlxTimer) {
       FlxTransitionableState.skipNextTransIn = false;
       FlxTransitionableState.skipNextTransOut = false;
 
-      if (!Preferences.songLaunchScreen)
-      {
-        Paths.setCurrentLevel(currentLevel.id);
+      var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
 
-        Highscore.talliesLevel = new funkin.Highscore.Tallies();
-
-        PlayStatePlaylist.playlistSongIds = currentLevel.getSongs();
-        PlayStatePlaylist.isStoryMode = true;
-        PlayStatePlaylist.campaignScore = 0;
-
-        var targetSongId:String = PlayStatePlaylist.playlistSongIds.shift();
-
-        var targetSong:Song = SongRegistry.instance.fetchEntry(targetSongId);
-
-        PlayStatePlaylist.campaignId = currentLevel.id;
-        PlayStatePlaylist.campaignTitle = currentLevel.getTitle();
-        PlayStatePlaylist.campaignDifficulty = currentDifficultyId;
-
-        var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
-
-        LoadingState.loadPlayState(
-          {
-            targetSong: targetSong,
-            targetDifficulty: PlayStatePlaylist.campaignDifficulty,
-            targetVariation: targetVariation
-          }, true);
-      }
-      else
-      {
-        // var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
-
-        SongLaunchState.weekSongIds = currentLevel.getSongs();
-        // SongLaunchState.isStoryMode = true;
-        // SongLaunchState.campaignScore = 0;
-
-        SongLaunchState.curWeekId = currentLevel.id;
-        SongLaunchState.curWeek = currentLevel.getTitle();
-        SongLaunchState.curDifficulty = currentDifficultyId;
-
-        FlxG.switchState(() -> new SongLaunchState(true));
-      }
+      LoadingState.loadPlayState(
+        {
+          targetSong: targetSong,
+          targetDifficulty: PlayStatePlaylist.campaignDifficulty,
+          targetVariation: targetVariation
+        }, true);
     });
   }
 

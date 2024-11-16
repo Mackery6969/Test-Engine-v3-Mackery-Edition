@@ -23,27 +23,6 @@ import funkin.play.notes.notekind.NoteKindManager;
  */
 class Strumline extends FlxSpriteGroup
 {
-  // Spam Detection Variables
-  public var spamThreshold:Int = 5; // Number of inputs considered as spam
-  public var spamWindow:Float = 1.5; // Time window in seconds for spam detection
-  public var inputTimestamps:Array<Float> = []; // To track input timings
-
-  // Function to detect spam
-  public function spamDetected():Bool
-  {
-    var currentTime:Float = FlxG.game.ticks; // Get current time
-    inputTimestamps.push(currentTime); // Add the current input time
-
-    // Remove timestamps older than the spam window
-    while (inputTimestamps.length > 0 && currentTime - inputTimestamps[0] > spamWindow)
-    {
-      inputTimestamps.shift();
-    }
-
-    // Detect if the spam threshold has been exceeded
-    return inputTimestamps.length > spamThreshold;
-  }
-
   public static final DIRECTIONS:Array<NoteDirection> = [NoteDirection.LEFT, NoteDirection.DOWN, NoteDirection.UP, NoteDirection.RIGHT];
   public static final STRUMLINE_SIZE:Int = 104;
   public static final NOTE_SPACING:Int = STRUMLINE_SIZE + 8;
@@ -115,7 +94,9 @@ class Strumline extends FlxSpriteGroup
 
   final noteStyle:NoteStyle;
 
+  #if FEATURE_GHOST_TAPPING
   var ghostTapTimer:Float = 0.0;
+  #end
 
   /**
    * The note data for the song. Should NOT be altered after the song starts,
@@ -203,9 +184,12 @@ class Strumline extends FlxSpriteGroup
 
     updateNotes();
 
+    #if FEATURE_GHOST_TAPPING
     updateGhostTapTimer(elapsed);
+    #end
   }
 
+  #if FEATURE_GHOST_TAPPING
   /**
    * Returns `true` if no notes are in range of the strumline and the player can spam without penalty.
    */
@@ -221,10 +205,6 @@ class Strumline extends FlxSpriteGroup
     {
       return false;
     }
-    if (!Preferences.ghostTapping)
-    {
-      return false;
-    }
 
     // Note has been hit recently.
     if (ghostTapTimer > 0.0) return false;
@@ -232,6 +212,7 @@ class Strumline extends FlxSpriteGroup
     // **yippee**
     return true;
   }
+  #end
 
   /**
    * Return notes that are within `Constants.HIT_WINDOW` ms of the strumline.
@@ -541,6 +522,7 @@ class Strumline extends FlxSpriteGroup
     });
   }
 
+  #if FEATURE_GHOST_TAPPING
   function updateGhostTapTimer(elapsed:Float):Void
   {
     // If it's still our turn, don't update the ghost tap timer.
@@ -553,6 +535,7 @@ class Strumline extends FlxSpriteGroup
       ghostTapTimer = 0;
     }
   }
+  #end
 
   /**
    * Called when the PlayState skips a large amount of time forward or backward.
@@ -626,7 +609,9 @@ class Strumline extends FlxSpriteGroup
     }
     resetScrollSpeed();
 
+    #if FEATURE_GHOST_TAPPING
     ghostTapTimer = 0;
+    #end
   }
 
   public function applyNoteData(data:Array<SongNoteData>):Void
@@ -667,7 +652,9 @@ class Strumline extends FlxSpriteGroup
       note.holdNoteSprite.sustainLength = (note.holdNoteSprite.strumTime + note.holdNoteSprite.fullSustainLength) - conductorInUse.songPosition;
     }
 
+    #if FEATURE_GHOST_TAPPING
     ghostTapTimer = Constants.GHOST_TAP_DELAY;
+    #end
   }
 
   public function killNote(note:NoteSprite):Void

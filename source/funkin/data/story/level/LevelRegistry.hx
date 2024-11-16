@@ -94,7 +94,6 @@ class LevelRegistry extends BaseRegistry<Level, LevelData>
   public function listBaseGameLevelIds():Array<String>
   {
     return [
-      "test",
       "tutorial",
       "week1",
       "week2",

@@ -21,30 +21,22 @@ class AttractState extends MusicBeatState
 
   public override function create():Void
   {
-    if (Preferences.quality != "Low")
+    // Pause existing music.
+    if (FlxG.sound.music != null)
     {
-      // Pause existing music.
-      if (FlxG.sound.music != null)
-      {
-        FlxG.sound.music.destroy();
-        FlxG.sound.music = null;
-      }
-
-      #if html5
-      trace('Playing web video ${ATTRACT_VIDEO_PATH}');
-      playVideoHTML5(ATTRACT_VIDEO_PATH);
-      #end
-
-      #if hxCodec
-      trace('Playing native video ${ATTRACT_VIDEO_PATH}');
-      playVideoNative(ATTRACT_VIDEO_PATH);
-      #end
+      FlxG.sound.music.destroy();
+      FlxG.sound.music = null;
     }
-    else
-    {
-      trace('Could not load video as users quality settings are at low.');
-      FlxG.switchState(() -> new TitleState());
-    }
+
+    #if html5
+    trace('Playing web video ${ATTRACT_VIDEO_PATH}');
+    playVideoHTML5(ATTRACT_VIDEO_PATH);
+    #end
+
+    #if hxCodec
+    trace('Playing native video ${ATTRACT_VIDEO_PATH}');
+    playVideoNative(ATTRACT_VIDEO_PATH);
+    #end
   }
 
   #if html5

@@ -1365,7 +1365,7 @@ class ChartEditorDialogHandler
     new FlxTimer().start(EPSILON, function(_) {
       for (handler in dropHandlers)
       {
-        if (handler.component.hitTest(FlxG.mouse.viewX, FlxG.mouse.viewY))
+        if (handler.component.hitTest(FlxG.mouse.screenX, FlxG.mouse.screenY))
         {
           handler.handler(path);
           return;

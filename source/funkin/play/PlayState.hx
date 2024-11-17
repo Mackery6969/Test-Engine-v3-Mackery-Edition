@@ -341,6 +341,11 @@ class PlayState extends MusicBeatSubState
   public var isInCutscene:Bool = false;
 
   /**
+   * How many times the player has been poisoned
+   */
+  public var poisonTimes:Int = 0;
+
+  /**
    * Whether the inputs should be disabled for whatever reason... used for the stage edit lol!
    */
   public var disableKeys:Bool = false;
@@ -2179,7 +2184,7 @@ class PlayState extends MusicBeatSubState
           infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
          */
       infoText.screenCenter(X);
-      if (misses == 0 && totalNotesHit > 0)
+      if (misses == 0)
       {
         infoText.text = ' | Score: '
           + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
@@ -2189,7 +2194,7 @@ class PlayState extends MusicBeatSubState
           + getSongAccuracy()
           + ' | ';
       }
-      else if (misses <= 10)
+      else if (misses <= 10 && misses > 0)
       {
         infoText.text = ' | Score: '
           + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
@@ -2218,10 +2223,13 @@ class PlayState extends MusicBeatSubState
 
   function getSongAccuracy():String
   {
-    if (totalNotes == 0) return "??%";
+    if (totalNotes == 0)
+    {
+      return "??%";
+    }
 
     var percentage:Float = (totalNotesHit / totalNotes) * 100;
-    return (Math.ceil(percentage * 100) / 100) + '%'; // Rounds up to 2 decimal points
+    return '${Math.round(percentage * 100) / 100}%'; // Formats and ensures 2 decimal points
   }
 
   /**
@@ -2230,6 +2238,7 @@ class PlayState extends MusicBeatSubState
   function updateHealthBar():Void
   {
     // :p
+    healthLerp = FlxMath.lerp(healthLerp, health, 0.15);
   }
 
   /**
@@ -2355,8 +2364,6 @@ class PlayState extends MusicBeatSubState
     {
       if (note == null) continue;
 
-      totalNotes++;
-
       if (note.hasBeenHit)
       {
         note.tooEarly = false;
@@ -2380,7 +2387,7 @@ class PlayState extends MusicBeatSubState
           note.holdNoteSprite.missedNote = true;
         }
       }
-      else if (Conductor.instance.songPosition > hitWindowCenter)
+      else if (isBotPlayMode && Conductor.instance.songPosition > hitWindowCenter)
       {
         if (note.hasBeenHit) continue;
 
@@ -2593,6 +2600,8 @@ class PlayState extends MusicBeatSubState
     // Round inward (trim remainder) for consistency.
     var noteDiff:Int = Std.int(Conductor.instance.songPosition - note.noteData.time - inputLatencyMs);
 
+    totalNotes++;
+
     var score = Scoring.scoreNote(noteDiff, PBOT1);
     var daRating = Scoring.judgeNote(noteDiff, PBOT1);
 
@@ -2615,6 +2624,40 @@ class PlayState extends MusicBeatSubState
       case 'shit':
         healthChange = Constants.HEALTH_SHIT_BONUS;
         isComboBreak = Constants.JUDGEMENT_SHIT_COMBO_BREAK;
+    }
+
+    if (Preferences.instaDeathMode != "None")
+    {
+      if (Preferences.instaDeathMode == "SFC" || Preferences.instaDeathMode == "GFC")
+      {
+        if (daRating != "sick" && Preferences.instaDeathMode == "SFC") health -= 9999;
+        else if ((daRating != "sick" || daRating != "good") && Preferences.instaDeathMode == "GFC") health -= 9999;
+      }
+      switch (daRating)
+      {
+        case 'sick':
+          if (Constants.JUDGEMENT_SICK_COMBO_BREAK) health -= 9999;
+        case 'good':
+          if (Constants.JUDGEMENT_GOOD_COMBO_BREAK) health -= 9999;
+        case 'bad':
+          if (Constants.JUDGEMENT_BAD_COMBO_BREAK) health -= 9999;
+        case 'shit':
+          if (Constants.JUDGEMENT_SHIT_COMBO_BREAK) health -= 9999;
+      }
+    }
+    else if (Preferences.healthDrainType == "Penalty")
+    {
+      switch (daRating)
+      {
+        case 'sick':
+          if (Constants.JUDGEMENT_SICK_COMBO_BREAK) poison();
+        case 'good':
+          if (Constants.JUDGEMENT_GOOD_COMBO_BREAK) poison();
+        case 'bad':
+          if (Constants.JUDGEMENT_BAD_COMBO_BREAK) poison();
+        case 'shit':
+          if (Constants.JUDGEMENT_SHIT_COMBO_BREAK) poison();
+      }
     }
 
     // Send the note hit event.
@@ -2644,6 +2687,8 @@ class PlayState extends MusicBeatSubState
   function onNoteMiss(note:NoteSprite, playSound:Bool = false, healthChange:Float):Void
   {
     // If we are here, we already CALLED the onNoteMiss script hook!
+
+    totalNotes++;
 
     if (!isPracticeMode)
     {
@@ -2684,12 +2729,36 @@ class PlayState extends MusicBeatSubState
     }
     vocals.playerVolume = 0;
 
+    if (Preferences.instaDeathMode != 'None')
+    {
+      health -= 9999;
+    }
+    else if (Preferences.healthDrainType == 'Penalty')
+    {
+      poison();
+    }
+
     applyScore(-10, 'miss', healthChange, true);
 
     if (playSound)
     {
       vocals.playerVolume = 0;
       FunkinSound.playOnce(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.5, 0.6));
+    }
+  }
+
+  function poison():Void
+  {
+    if (Preferences.healthDrainType == "Penalty" && poisonTimes < Constants.MAX_POISON_TIMES)
+    {
+      poisonTimes += 1;
+      var poisonPlusTimer:FlxTimer = new FlxTimer().start(Constants.POISON_DAMAGE_INTERVAL, function(tmr:FlxTimer) {
+        health -= Constants.POISON_DAMAGE;
+      }, 0);
+      new FlxTimer().start(Constants.POISON_DAMAGE_TIME, function(tmr:FlxTimer) {
+        poisonPlusTimer.cancel();
+        poisonTimes -= 1;
+      });
     }
   }
 

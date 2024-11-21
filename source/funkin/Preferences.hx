@@ -294,6 +294,21 @@ class Preferences
   public static var lockedFramerateFunction = untyped js.Syntax.code("window.requestAnimationFrame");
   #end
 
+  public static var experimentalOptions(get, set):Bool;
+
+  static function get_experimentalOptions():Bool
+  {
+    return Save?.instance?.options?.experimentalOptions;
+  }
+
+  static function set_experimentalOptions(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.experimentalOptions = value;
+    save.flush();
+    return value;
+  }
+
   public static var seenFlashingState(get, set):Bool;
 
   static function get_seenFlashingState():Bool
@@ -309,22 +324,39 @@ class Preferences
     return value;
   }
 
-  /*
-    - - - - - -
-    MODIFIERS
-    - - - - - -
+  public static var comboMilestone(get, set):Bool;
+
+  static function get_comboMilestone():Bool
+  {
+    return Save?.instance?.options?.comboMilestone;
+  }
+
+  static function set_comboMilestone(value:Bool):Bool
+  {
+    var save:Save = Save.instance;
+    save.options.comboMilestone = value;
+    save.flush();
+    return value;
+  }
+
+  // MODIFIERS
+
+  /**
+   * If Enabled, the game will play itself.
+   * Score will not be saved
+   * @default 'false'
    */
   public static var botPlay(get, set):Bool;
 
   static function get_botPlay():Bool
   {
-    return Save?.instance?.modifiers?.botPlay;
+    return Save?.instance?.options?.botPlay;
   }
 
   static function set_botPlay(value:Bool):Bool
   {
     var save:Save = Save.instance;
-    save.modifiers.botPlay = value;
+    save.options.botPlay = value;
     save.flush();
     return value;
   }
@@ -333,13 +365,13 @@ class Preferences
 
   static function get_practice():Bool
   {
-    return Save?.instance?.modifiers?.practice;
+    return Save?.instance?.options?.practice;
   }
 
   static function set_practice(value:Bool):Bool
   {
     var save:Save = Save.instance;
-    save.modifiers.practice = value;
+    save.options.practice = value;
     save.flush();
     return value;
   }
@@ -348,13 +380,13 @@ class Preferences
 
   static function get_songSpeed():Int
   {
-    return Save?.instance?.modifiers?.songSpeed;
+    return Save?.instance?.options?.songSpeed;
   }
 
   static function set_songSpeed(value:Int):Int
   {
     var save:Save = Save.instance;
-    save.modifiers.songSpeed = value;
+    save.options.songSpeed = value;
     save.flush();
     return value;
   }
@@ -363,13 +395,13 @@ class Preferences
 
   static function get_instaDeathMode():String
   {
-    return Save?.instance?.modifiers?.instaDeathMode;
+    return Save?.instance?.options?.instaDeathMode;
   }
 
   static function set_instaDeathMode(value:String):String
   {
     var save:Save = Save.instance;
-    save.modifiers.instaDeathMode = value;
+    save.options.instaDeathMode = value;
     save.flush();
     return value;
   }
@@ -378,13 +410,13 @@ class Preferences
 
   static function get_healthGain():Int
   {
-    return Save?.instance?.modifiers?.healthGain;
+    return Save?.instance?.options?.healthGain;
   }
 
   static function set_healthGain(value:Int):Int
   {
     var save:Save = Save.instance;
-    save.modifiers.healthGain = value;
+    save.options.healthGain = value;
     save.flush();
     return value;
   }
@@ -393,13 +425,13 @@ class Preferences
 
   static function get_healthLoss():Int
   {
-    return Save?.instance?.modifiers?.healthLoss;
+    return Save?.instance?.options?.healthLoss;
   }
 
   static function set_healthLoss(value:Int):Int
   {
     var save:Save = Save.instance;
-    save.modifiers.healthLoss = value;
+    save.options.healthLoss = value;
     save.flush();
     return value;
   }
@@ -408,13 +440,13 @@ class Preferences
 
   static function get_healthDrainType():String
   {
-    return Save?.instance?.modifiers?.healthDrainType;
+    return Save?.instance?.options?.healthDrainType;
   }
 
   static function set_healthDrainType(value:String):String
   {
     var save:Save = Save.instance;
-    save.modifiers.healthDrainType = value;
+    save.options.healthDrainType = value;
     save.flush();
     return value;
   }
@@ -423,13 +455,13 @@ class Preferences
 
   static function get_healthDrainAmount():Float
   {
-    return Save?.instance?.modifiers?.healthDrainAmount;
+    return Save?.instance?.options?.healthDrainAmount;
   }
 
   static function set_healthDrainAmount(value:Float):Float
   {
     var save:Save = Save.instance;
-    save.modifiers.healthDrainAmount = value;
+    save.options.healthDrainAmount = value;
     save.flush();
     return value;
   }

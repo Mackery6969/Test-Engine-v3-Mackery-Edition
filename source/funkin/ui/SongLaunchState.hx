@@ -231,42 +231,42 @@ class SongLaunchState extends MusicBeatState
 
     createConfItemCheckbox('BotPlay', function(value:Bool):Void {
       Preferences.botPlay = value;
-      saveOption("botPlay", value); // Save change immediately
+      // saveOption("botPlay", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.botPlay);
 
     createConfItemCheckbox('Practice Mode', function(value:Bool):Void {
       Preferences.practice = value;
-      saveOption("practice", value); // Save change immediately
+      // saveOption("practice", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.practice);
 
     createConfItemPercentage('Song Speed', function(value:Int):Void {
       Preferences.songSpeed = value;
-      saveOption("songSpeed", value); // Save change immediately
+      // saveOption("songSpeed", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Std.int(Preferences.songSpeed), 5, 1000);
 
     createConfItemEnum('Death Mode', ["None" => "None", "SFC" => "Sick FC", "GFC" => "Good FC", "FC" => "FC"], function(value:String) {
       Preferences.instaDeathMode = value;
-      saveOption("instaDeathMode", value); // Save change immediately
+      // saveOption("instaDeathMode", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.instaDeathMode);
 
     createConfItemPercentage('Health Gain', function(value:Int):Void {
       Preferences.healthGain = value;
-      saveOption("healthGain", value); // Save change immediately
+      // saveOption("healthGain", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Std.int(Preferences.healthGain), 0, 1000);
 
     createConfItemPercentage('Health Loss', function(value:Int):Void {
       Preferences.healthLoss = value;
-      saveOption("healthLoss", value); // Save change immediately
+      // saveOption("healthLoss", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Std.int(Preferences.healthLoss), 0, 1000);
@@ -278,14 +278,14 @@ class SongLaunchState extends MusicBeatState
       "Constant" => "Constant"
     ], function(value:String) {
       Preferences.healthDrainType = value;
-      saveOption("healthDrainType", value); // Save change immediately
+      // saveOption("healthDrainType", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, Preferences.healthDrainType);
 
     createConfItemDecimal('Health Drain Amount', function(value:Float) {
       Preferences.healthDrainAmount = value;
-      saveOption("healthDrainAmount", value); // Save change immediately
+      // saveOption("healthDrainAmount", value); // Save change immediately
       markModifiedOptions();
       checkModifiers();
     }, null, Preferences.healthDrainAmount, 0.005, 1, 0.0005, 4);
@@ -296,13 +296,14 @@ class SongLaunchState extends MusicBeatState
    * @param key The modifier.
    * @param value The new value of the modifier.
    */
-  function saveOption(key:String, value:Any):Void
-  {
-    var save:Save = Save.instance;
-    Reflect.setField(save.modifiers, key, value); // Use reflection to set fields dynamically
-    save.flush(); // Immediately flush changes to ensure they persist
-  }
-
+  /*
+    function saveOption(key:String, value:Any):Void
+    {
+      var save:Save = Save.instance;
+      Reflect.setField(save.modifiers, key, value); // Use reflection to set fields dynamically
+      save.flush(); // Immediately flush changes to ensure they persist
+    }
+   */
   override function update(elapsed:Float):Void
   {
     super.update(elapsed);

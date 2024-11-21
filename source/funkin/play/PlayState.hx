@@ -413,13 +413,13 @@ class PlayState extends MusicBeatSubState
    * helper variable for accuracy.
    * All notess in the song up to this point.
    */
-  var totalNotes:Int = 0;
+  public var totalNotes:Int = 0;
 
   /**
    * helper variable for accuracy.
    * All notes that have been pressed at a percent.
    */
-  var totalNotesHit:Float = 0;
+  public var totalNotesHit:Float = 0;
 
   /**
    * How long the user has held the "Skip Video Cutscene" button for.
@@ -441,7 +441,7 @@ class PlayState extends MusicBeatSubState
   /**
    * False as long as the countdown has not finished yet.
    */
-  var startingSong:Bool = false;
+  public var startingSong:Bool = false;
 
   /**
    * Track if we currently have the music paused for a Pause substate, so we can unpause it when we return.
@@ -1531,17 +1531,56 @@ class PlayState extends MusicBeatSubState
 
     var shouldShowComboText:Bool = false;
     // TODO: Re-enable combo text (how to do this without sections?).
-    // if (currentSong != null)
-    // {
-    //  shouldShowComboText = (Conductor.instance.currentBeat % 8 == 7);
-    //  var daSection = .getSong()[Std.int(Conductor.instance.currentBeat / 16)];
-    //  shouldShowComboText = shouldShowComboText && (daSection != null && daSection.mustHitSection);
-    //  shouldShowComboText = shouldShowComboText && (Highscore.tallies.combo > 5);
-    //
-    //  var daNextSection = .getSong()[Std.int(Conductor.instance.currentBeat / 16) + 1];
-    //  var isEndOfSong = .getSong().length < Std.int(Conductor.instance.currentBeat / 16);
-    //  shouldShowComboText = shouldShowComboText && (isEndOfSong || (daNextSection != null && !daNextSection.mustHitSection));
-    // }
+    // turns out mofo ninjamuffin99 thought of this and removed the files... :[
+    if (currentSong != null && Preferences.comboMilestone)
+    {
+      shouldShowComboText = (Conductor.instance.currentBeat % 8 == 7);
+
+      // Retrieve the current variation and difficulty
+      var currentVariation = currentVariation; // from PlayState
+      var currentDifficulty = currentDifficulty; // from PlayState
+
+      // Access the difficulties map for the active variation
+      var difficulties = currentSong.getDifficulties();
+      var variationDifficulties = difficulties.get(currentVariation);
+
+      if (variationDifficulties != null)
+      {
+        var activeDifficulty = variationDifficulties.get(currentDifficulty);
+
+        if (activeDifficulty != null)
+        {
+          var notes = activeDifficulty.notes;
+          var sectionIndex = Std.int(Conductor.instance.currentBeat / 16);
+          trace("Section Index: " + sectionIndex);
+
+          // Access the current section
+          var daSection = notes[sectionIndex];
+          trace("Current Section: " + (daSection != null));
+          shouldShowComboText = shouldShowComboText && (daSection != null && daSection.getMustHitNote());
+
+          trace("Combo Greater than 5: " + (Highscore.tallies.combo > 5));
+          shouldShowComboText = shouldShowComboText && (Highscore.tallies.combo > 5);
+
+          // Check the next section and end of the song
+          var daNextSection = notes[sectionIndex + 1];
+          var isEndOfSong = sectionIndex >= notes.length;
+          trace("Next Section: " + (daNextSection != null));
+          trace("Is End of Song: " + isEndOfSong);
+
+          shouldShowComboText = isEndOfSong || (daNextSection != null && !daNextSection.getMustHitNote());
+          trace("shouldShowComboText: " + shouldShowComboText);
+        }
+        else
+        {
+          trace("Active difficulty data is null!");
+        }
+      }
+      else
+      {
+        trace("Variation difficulties are null for variation: " + currentVariation);
+      }
+    }
 
     if (shouldShowComboText)
     {
@@ -1550,6 +1589,8 @@ class PlayState extends MusicBeatSubState
       animShit.zIndex = 1100;
       animShit.cameras = [camHUD];
       add(animShit);
+
+      trace("animShit added to the state!");
 
       var frameShit:Float = (1 / 24) * 2; // equals 2 frames in the animation
 
@@ -2540,7 +2581,7 @@ class PlayState extends MusicBeatSubState
       playerStrumline.pressKey(input.noteDirection);
 
       // Don't credit or penalize inputs in Bot Play.
-      if (isBotPlayMode) continue;
+      // if (isBotPlayMode) continue;
 
       var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
 
@@ -2605,26 +2646,31 @@ class PlayState extends MusicBeatSubState
     var score = Scoring.scoreNote(noteDiff, PBOT1);
     var daRating = Scoring.judgeNote(noteDiff, PBOT1);
 
-    var healthChange = 0.0;
-    var isComboBreak = false;
+    var healthChange:Float = 0.0;
+    var isComboBreak:Bool = false;
+    var noteHitIncrease:Float = 0;
     switch (daRating)
     {
       case 'sick':
         healthChange = Constants.HEALTH_SICK_BONUS;
         isComboBreak = Constants.JUDGEMENT_SICK_COMBO_BREAK;
-        totalNotesHit + 1;
+        noteHitIncrease = 1;
       case 'good':
         healthChange = Constants.HEALTH_GOOD_BONUS;
         isComboBreak = Constants.JUDGEMENT_GOOD_COMBO_BREAK;
-        totalNotesHit + 0.8;
+        noteHitIncrease = 0.8;
       case 'bad':
         healthChange = Constants.HEALTH_BAD_BONUS;
         isComboBreak = Constants.JUDGEMENT_BAD_COMBO_BREAK;
-        totalNotesHit + 0.5;
+        noteHitIncrease = 0.5;
       case 'shit':
         healthChange = Constants.HEALTH_SHIT_BONUS;
         isComboBreak = Constants.JUDGEMENT_SHIT_COMBO_BREAK;
+        noteHitIncrease = 0;
     }
+
+    totalNotesHit = totalNotesHit + noteHitIncrease;
+    // trace(totalNotesHit);
 
     if (Preferences.instaDeathMode != "None")
     {

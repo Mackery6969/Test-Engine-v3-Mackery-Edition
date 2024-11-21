@@ -318,14 +318,18 @@ class TitleState extends MusicBeatState
     // If you spam Enter, we should skip the transition.
     if (pressedEnter && transitioning && skippedIntro)
     {
-      if (Preferences.seenFlashingState)
-      {
-        FlxG.switchState(() -> new MainMenuState());
-      }
-      else
-      {
-        FlxG.switchState(() -> new FlashingState());
-      }
+      /*
+        if (Preferences.seenFlashingState)
+        {
+       */
+      FlxG.switchState(() -> new MainMenuState());
+      /*
+        }
+        else
+        {
+          FlxG.switchState(() -> new FlashingState());
+        }
+       */
     }
 
     if (pressedEnter && !transitioning && skippedIntro)
@@ -339,7 +343,6 @@ class TitleState extends MusicBeatState
       FlxG.camera.flash(FlxColor.WHITE, 1);
       FunkinSound.playOnce(Paths.sound('confirmMenu'), 0.7);
       transitioning = true;
-
       var targetState:NextState = () -> new MainMenuState();
 
       new FlxTimer().start(2, function(tmr:FlxTimer) {
@@ -355,7 +358,6 @@ class TitleState extends MusicBeatState
       // FunkinSound.playOnce(Paths.music('titleShoot'), 0.7);
     }
     if (pressedEnter && !skippedIntro && initialized) skipIntro();
-
     if (controls.UI_LEFT) swagShader.update(-elapsed * 0.1);
     if (controls.UI_RIGHT) swagShader.update(elapsed * 0.1);
     if (!cheatActive && skippedIntro) cheatCodeShit();

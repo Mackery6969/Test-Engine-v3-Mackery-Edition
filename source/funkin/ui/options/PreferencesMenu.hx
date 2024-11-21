@@ -100,6 +100,11 @@ class PreferencesMenu extends Page
       Preferences.framerate = Std.int(value);
     }, null, Preferences.framerate, 30, 300, 5, 0);
     #end
+
+    createPrefItemCheckbox('Experimental Settings',
+      'If Enabled, The Experimental Tab will be open to use any Experimental Features, Although expect crashes and whatnot..', function(value:Bool):Void {
+        Preferences.experimentalOptions = value;
+    }, Preferences.experimentalOptions);
   }
 
   override function update(elapsed:Float):Void

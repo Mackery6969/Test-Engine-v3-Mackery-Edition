@@ -22,7 +22,7 @@ class Save
   public static final SAVE_DATA_VERSION_RULE:thx.semver.VersionRule = "2.0.x";
 
   // We load this version's saves from a new save path, to maintain SOME level of backwards compatibility.
-  static final SAVE_PATH:String = 'Msckery';
+  static final SAVE_PATH:String = 'MackeryGames';
   static final SAVE_NAME:String = 'TestEngine';
 
   static final SAVE_PATH_LEGACY:String = 'ninjamuffin99';
@@ -107,6 +107,21 @@ class Save
           inputOffset: 0,
           audioVisualOffset: 0,
           unlockedFramerate: false,
+          experimentalOptions: #if (debug) true, #else false, #end
+
+          // experiments
+          comboMilestone: false,
+
+          // MODIFIERS
+
+          botPlay: false,
+          practice: false,
+          songSpeed: 100,
+          instaDeathMode: 'None',
+          healthGain: 100,
+          healthLoss: 100,
+          healthDrainType: 'None',
+          healthDrainAmount: 0.02,
 
           seenFlashingState: false,
 
@@ -124,18 +139,6 @@ class Save
                   gamepad: {},
                 },
             },
-        },
-
-      modifiers:
-        {
-          botPlay: false,
-          practice: false,
-          songSpeed: 100,
-          instaDeathMode: 'None',
-          healthGain: 100,
-          healthLoss: 100,
-          healthDrainType: 'None',
-          healthDrainAmount: 0.02,
         },
 
       mods:
@@ -185,16 +188,6 @@ class Save
   function get_options():SaveDataOptions
   {
     return data.options;
-  }
-
-  /**
-   * NOTE: Modifications will not be saved without calling `Save.flush()`!
-   */
-  public var modifiers(get, never):SaveDataModifiers;
-
-  function get_modifiers():SaveDataModifiers
-  {
-    return data.modifiers;
   }
 
   /**
@@ -981,6 +974,7 @@ class Save
    */
   public function flush():Void
   {
+    trace('[SAVE] Flushing save data...');
     FlxG.save.flush();
   }
 
@@ -994,6 +988,8 @@ class Save
 
     // Prevent crashes if the save data is corrupted.
     SerializerUtil.initSerializer();
+
+    trace('[SAVE] Binding to save file: ' + '$SAVE_NAME${slot}' + ' at ' + SAVE_PATH);
 
     FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH);
 
@@ -1176,8 +1172,6 @@ typedef RawSaveData =
    * The user's preferences.
    */
   var options:SaveDataOptions;
-
-  var modifiers:SaveDataModifiers;
 
   var unlocks:SaveDataUnlocks;
 
@@ -1371,31 +1365,21 @@ typedef SaveDataOptions =
   var unlockedFramerate:Bool;
 
   /**
+   * Enables Experimental Options Menu
+   * @default 'false'
+   */
+  var experimentalOptions:Bool;
+
+  /**
    * if the flashing state has been seen, we dont want trouble before you even enable it..
    * @default 'false'
    */
   var seenFlashingState:Bool;
 
-  var controls:
-    {
-      var p1:
-        {
-          var keyboard:SaveControlsData;
-          var gamepad:SaveControlsData;
-        };
-      var p2:
-        {
-          var keyboard:SaveControlsData;
-          var gamepad:SaveControlsData;
-        };
-    };
-};
+  // EXPERIMENTS
+  var comboMilestone:Bool;
 
-/**
- * see SongLaunchState.
- */
-typedef SaveDataModifiers =
-{
+  // MODIFIERS
   var botPlay:Bool;
 
   var practice:Bool;
@@ -1411,6 +1395,20 @@ typedef SaveDataModifiers =
   var healthDrainType:String;
 
   var healthDrainAmount:Float;
+
+  var controls:
+    {
+      var p1:
+        {
+          var keyboard:SaveControlsData;
+          var gamepad:SaveControlsData;
+        };
+      var p2:
+        {
+          var keyboard:SaveControlsData;
+          var gamepad:SaveControlsData;
+        };
+    };
 };
 
 /**

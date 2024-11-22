@@ -30,7 +30,8 @@ modding.
 
 Full credits can be found in-game,
 
-- Mackery - All Alone Programmer.
+- Mackery - Programmer.
+- KittySleeper - Programmer.
 
 ### Funkin' Crew
 

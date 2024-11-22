@@ -14,6 +14,11 @@ import funkin.ui.debug.stageeditor.StageEditorState.StageEditorTheme;
 import funkin.util.SerializerUtil;
 import thx.semver.Version;
 import thx.semver.Version;
+import sys.io.File;
+import sys.FileSystem;
+import haxe.Json;
+import Sys;
+import openfl.system.System;
 
 @:nullSafety
 class Save
@@ -21,12 +26,10 @@ class Save
   public static final SAVE_DATA_VERSION:thx.semver.Version = "2.0.4";
   public static final SAVE_DATA_VERSION_RULE:thx.semver.VersionRule = "2.0.x";
 
-  // We load this version's saves from a new save path, to maintain SOME level of backwards compatibility.
-  static final SAVE_PATH:String = 'MackeryGames';
-  static final SAVE_NAME:String = 'TestEngine';
-
-  static final SAVE_PATH_LEGACY:String = 'ninjamuffin99';
-  static final SAVE_NAME_LEGACY:String = 'funkin';
+  public static final SAVE_DIRECTORY:String = FileSystem.absolutePath(Sys.getEnv("APPDATA") + "\\MackeryGames\\TestEngine");
+  public static final SAVE_FILE:String = SAVE_DIRECTORY + "\\save.json";
+  static final LEGACY_SAVE_PATH:String = "ninjamuffin99";
+  static final LEGACY_SAVE_NAME:String = "funkin";
 
   public static var instance(get, never):Save;
   static var _instance:Null<Save> = null;
@@ -48,16 +51,39 @@ class Save
    */
   public static function load():Save
   {
-    trace("[SAVE] Loading save...");
-    if (querySlot(1))
+    trace("[SAVE] Loading save from " + SAVE_FILE);
+
+    // Ensure the directory exists
+    if (!FileSystem.exists(SAVE_DIRECTORY))
     {
-      return loadFromSlot(1);
+      trace("[SAVE] Save directory does not exist. Creating...");
+      FileSystem.createDirectory(SAVE_DIRECTORY);
     }
-    else
+
+    try
     {
-      trace("[SAVE] No save data found in slot 1. Creating a new save...");
-      return new Save();
+      // Attempt to load save file
+      if (FileSystem.exists(SAVE_FILE))
+      {
+        var saveJson = File.getContent(SAVE_FILE);
+        var parsedData = Json.parse(saveJson);
+        trace("[SAVE] Save loaded successfully!");
+        return new Save(parsedData);
+      }
+      else
+      {
+        trace("[SAVE] Save file does not exist. Creating a new one...");
+      }
     }
+    catch (e:Dynamic)
+    {
+      trace("[SAVE] Failed to load save file: " + e);
+    }
+
+    // Create a new save file
+    var defaultSave = new Save();
+    defaultSave.flush(); // Ensures the new save file is written
+    return defaultSave;
   }
 
   /**
@@ -65,43 +91,24 @@ class Save
    */
   public function new(?data:RawSaveData)
   {
-    if (data == null) this.data = Save.getDefault();
-    else
-      this.data = data;
+    // Assign default data if none is provided
+    this.data = data == null ? getDefault() : data;
 
-    // Make sure the verison number is up to date before we flush.
+    // Ensure the version is up to date
     updateVersionToLatest();
   }
 
   public static function getDefault():RawSaveData
   {
     return {
-      // Version number is an abstract(Array) internally.
-      // This means it copies by reference, so merging save data overides the version number lol.
-      version: thx.Dynamics.clone(Save.SAVE_DATA_VERSION),
-
+      version: SAVE_DATA_VERSION,
       volume: 1.0,
       mute: false,
-
-      api:
-        {
-          newgrounds:
-            {
-              sessionId: null,
-            }
-        },
-      scores:
-        {
-          // No saved scores.
-          levels: [],
-          songs: [],
-        },
-
+      api: {newgrounds: {sessionId: null}},
+      scores: {levels: [], songs: []},
       favoriteSongs: [],
-
       options:
         {
-          // Reasonable defaults.
           framerate: 60,
           quality: 'High',
           naughtyness: true,
@@ -117,13 +124,8 @@ class Save
           inputOffset: 0,
           audioVisualOffset: 0,
           unlockedFramerate: false,
-          experimentalOptions: #if (debug) true, #else false, #end
-
-          // experiments
+          experimentalOptions: false,
           comboMilestone: false,
-
-          // MODIFIERS
-
           botPlay: false,
           practice: false,
           songSpeed: 100,
@@ -132,42 +134,17 @@ class Save
           healthLoss: 100,
           healthDrainType: 'None',
           healthDrainAmount: 0.02,
-
           seenFlashingState: false,
-
           controls:
             {
-              // Leave controls blank so defaults are loaded.
-              p1:
-                {
-                  keyboard: {},
-                  gamepad: {},
-                },
-              p2:
-                {
-                  keyboard: {},
-                  gamepad: {},
-                },
-            },
+              p1: {keyboard: {}, gamepad: {}},
+              p2: {keyboard: {}, gamepad: {}}
+            }
         },
-
-      mods:
-        {
-          // No mods enabled.
-          enabledMods: [],
-          modOptions: [],
-        },
-
-      unlocks:
-        {
-          // Default to having seen the default character.
-          charactersSeen: ["bf", "pico"],
-          oldChar: false
-        },
-
+      mods: {enabledMods: [], modOptions: []},
+      unlocks: {charactersSeen: ["bf", "pico"], oldChar: false},
       optionsChartEditor:
         {
-          // Reasonable defaults.
           previousFiles: [],
           noteQuant: 3,
           chartEditorLiveInputStyle: ChartEditorLiveInputStyle.None,
@@ -179,7 +156,6 @@ class Save
           hitsoundVolumeOpponent: 1.0,
           themeMusic: true
         },
-
       optionsStageEditor:
         {
           previousFiles: [],
@@ -984,176 +960,84 @@ class Save
    */
   public function flush():Void
   {
-    trace('[SAVE] Flushing save data...');
-    if (!FlxG.save.flush())
+    try
     {
-      trace('[SAVE] Failed to flush save data. Check file permissions or storage availability.');
+      trace("[SAVE] Writing save data to file...");
+      var saveJson = Json.stringify(this.data, "\t");
+      File.saveContent(SAVE_FILE, saveJson);
+      trace("[SAVE] Save data successfully written to: " + SAVE_FILE);
+    }
+    catch (e:Dynamic)
+    {
+      trace("[SAVE] Failed to write save data: " + e);
     }
   }
 
   /**
-   * If you set slot to `2`, it will load an independe
-   * @param slot
+   * Archives bad save data to a recovery file.
    */
-  public static function loadFromSlot(slot:Int):Save
+  public static function archiveBadSaveData(data:Dynamic):Void
   {
-    trace("[SAVE] Loading save from slot " + slot + "...");
+    trace("[SAVE] Archiving bad save data...");
 
-    // Prevent crashes if the save data is corrupted
-    SerializerUtil.initSerializer();
-
-    if (!FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    // Ensure save directory exists
+    if (!FileSystem.exists(SAVE_DIRECTORY))
     {
-      trace("[SAVE] Failed to bind save for slot $slot at $SAVE_PATH.");
-      return new Save(); // Return new save on failure
+      FileSystem.createDirectory(SAVE_DIRECTORY);
     }
 
-    if (FlxG.save.isEmpty())
+    // Create a timestamped recovery file name
+    var timestamp:String = Date.now().toString().replace(":", "-");
+    var recoveryFile:String = SAVE_DIRECTORY + "/recovery_" + timestamp + ".json";
+
+    try
     {
-      trace("[SAVE] Save data is empty. Checking for legacy save data...");
-      var legacySaveData = fetchLegacySaveData();
-      if (legacySaveData != null)
-      {
-        trace("[SAVE] Found legacy save data. Attempting migration...");
-        try
-        {
-          var gameSave = SaveDataMigrator.migrateFromLegacy(legacySaveData);
-          FlxG.save.mergeData(gameSave.data, true);
-          return gameSave;
-        }
-        catch (e:Dynamic)
-        {
-          trace("[SAVE] Legacy save migration failed: " + e);
-          return new Save(); // Fallback to a new save
-        }
-      }
-      else
-      {
-        trace("[SAVE] No legacy save data found. Creating new save...");
-        var gameSave = new Save();
-        FlxG.save.mergeData(gameSave.data, true);
-        return gameSave;
-      }
+      // Save the bad data as JSON
+      var saveJson = Json.stringify(data, '\t');
+      File.saveContent(recoveryFile, saveJson);
+      trace("[SAVE] Bad save data archived to: " + recoveryFile);
     }
-    else
+    catch (e:Dynamic)
     {
-      trace("[SAVE] Existing save data found. Attempting migration...");
-      try
-      {
-        var gameSave = SaveDataMigrator.migrate(FlxG.save.data);
-        if (gameSave == null || gameSave.data == null)
-        {
-          throw "Invalid save data.";
-        }
-        FlxG.save.mergeData(gameSave.data, true);
-        return gameSave;
-      }
-      catch (e:Dynamic)
-      {
-        trace("[SAVE] Migration failed: " + e);
-        return new Save(); // Fallback to a new save
-      }
+      trace("[SAVE] Failed to archive bad save data: " + e);
     }
   }
 
-  public static function archiveBadSaveData(data:Dynamic):Int
-  {
-    final RECOVERY_SLOT_START = 1000;
-    return writeToAvailableSlot(RECOVERY_SLOT_START, data);
-  }
-
+  /**
+   * Debug: Lists all recovery files in the save directory.
+   */
   public static function debug_queryBadSaveData():Void
   {
-    final RECOVERY_SLOT_START = 1000;
-    final RECOVERY_SLOT_END = 1100;
-    var firstBadSaveData = querySlotRange(RECOVERY_SLOT_START, RECOVERY_SLOT_END);
-    if (firstBadSaveData > 0)
-    {
-      trace('[SAVE] Found bad save data in slot ${firstBadSaveData}!');
-      trace('We should look into recovery...');
+    trace("[SAVE] Querying archived recovery files...");
 
-      trace(haxe.Json.stringify(fetchFromSlotRaw(firstBadSaveData)));
-    }
-  }
-
-  public static function fetchFromSlotRaw(slot:Int):Null<Dynamic>
-  {
-    var targetSaveData = new FlxSave();
-    if (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    // Ensure save directory exists
+    if (!FileSystem.exists(SAVE_DIRECTORY))
     {
-      trace("[SAVE] Failed to bind slot $slot for raw fetch.");
-      return null;
-    }
-    return targetSaveData.isEmpty() ? null : targetSaveData.data;
-  }
-
-  public static function writeToAvailableSlot(slot:Int, data:Dynamic):Int
-  {
-    trace('[SAVE] Finding slot to write data to (starting with ${slot})...');
-    var targetSaveData = new FlxSave();
-    while (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH) || !targetSaveData.isEmpty())
-    {
-      trace("[SAVE] Slot ${slot} is unavailable. Trying the next slot...");
-      slot++;
+      trace("[SAVE] No recovery files found. Save directory does not exist.");
+      return;
     }
 
-    trace("[SAVE] Writing data to slot ${slot}...");
-    targetSaveData.mergeData(data, true);
-    if (!targetSaveData.flush())
+    // List all recovery files
+    var recoveryFiles = FileSystem.readDirectory(SAVE_DIRECTORY).filter(file -> file.indexOf("recovery_") == 0 && file.endsWith(".json"));
+
+    if (recoveryFiles.length == 0)
     {
-      trace("[SAVE] Failed to flush data to slot ${slot}.");
-      return -1;
+      trace("[SAVE] No recovery files found.");
+      return;
     }
 
-    trace("[SAVE] Data successfully written to slot ${slot}!");
-    return slot;
-  }
-
-  /**
-   * Return true if the given save slot is not empty.
-   * @param slot The slot number to check.
-   * @return Whether the slot is not empty.
-   */
-  public static function querySlot(slot:Int):Bool
-  {
-    var targetSaveData = new FlxSave();
-    if (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    trace("[SAVE] Found recovery files:");
+    for (file in recoveryFiles)
     {
-      trace('[SAVE] Failed to bind slot $slot for query.');
-      return false;
+      trace("- " + file);
     }
-    if (targetSaveData.isEmpty())
-    {
-      trace('[SAVE] Slot $slot is empty.');
-      return false;
-    }
-    trace('[SAVE] Slot $slot contains data.');
-    return true;
-  }
-
-  /**
-   * Return true if any of the slots in the given range is not empty.
-   * @param start The starting slot number to check.
-   * @param end The ending slot number to check.
-   * @return The first slot in the range that is not empty, or `-1` if none are.
-   */
-  public static function querySlotRange(start:Int, end:Int):Int
-  {
-    for (i in start...end)
-    {
-      if (querySlot(i))
-      {
-        return i;
-      }
-    }
-    return -1;
   }
 
   public static function fetchLegacySaveData():Null<RawSaveData_v1_0_0>
   {
     trace("[SAVE] Checking for legacy save data...");
     var legacySave = new FlxSave();
-    if (!legacySave.bind(SAVE_NAME_LEGACY, SAVE_PATH_LEGACY))
+    if (!legacySave.bind(LEGACY_SAVE_NAME, LEGACY_SAVE_PATH))
     {
       trace("[SAVE] Failed to bind legacy save data.");
       return null;
@@ -1182,7 +1066,7 @@ class Save
 
   public function updateVersionToLatest():Void
   {
-    this.data.version = Save.SAVE_DATA_VERSION;
+    data.version = SAVE_DATA_VERSION;
   }
 
   public function debug_dumpSave():Void

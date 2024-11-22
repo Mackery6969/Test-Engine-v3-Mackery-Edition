@@ -42,12 +42,22 @@ class Save
 
   var data:RawSaveData;
 
+  /**
+   * Loads the save game
+   * @return Save
+   */
   public static function load():Save
   {
     trace("[SAVE] Loading save...");
-
-    // Bind save data.
-    return loadFromSlot(1);
+    if (querySlot(1))
+    {
+      return loadFromSlot(1);
+    }
+    else
+    {
+      trace("[SAVE] No save data found in slot 1. Creating a new save...");
+      return new Save();
+    }
   }
 
   /**
@@ -975,38 +985,51 @@ class Save
   public function flush():Void
   {
     trace('[SAVE] Flushing save data...');
-    FlxG.save.flush();
+    if (!FlxG.save.flush())
+    {
+      trace('[SAVE] Failed to flush save data. Check file permissions or storage availability.');
+    }
   }
 
   /**
    * If you set slot to `2`, it will load an independe
    * @param slot
    */
-  static function loadFromSlot(slot:Int):Save
+  public static function loadFromSlot(slot:Int):Save
   {
     trace("[SAVE] Loading save from slot " + slot + "...");
 
-    // Prevent crashes if the save data is corrupted.
+    // Prevent crashes if the save data is corrupted
     SerializerUtil.initSerializer();
 
-    trace('[SAVE] Binding to save file: ' + '$SAVE_NAME${slot}' + ' at ' + SAVE_PATH);
-
-    FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH);
+    if (!FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    {
+      trace("[SAVE] Failed to bind save for slot $slot at $SAVE_PATH.");
+      return new Save(); // Return new save on failure
+    }
 
     if (FlxG.save.isEmpty())
     {
-      trace('[SAVE] Save data is empty, checking for legacy save data...');
+      trace("[SAVE] Save data is empty. Checking for legacy save data...");
       var legacySaveData = fetchLegacySaveData();
       if (legacySaveData != null)
       {
-        trace('[SAVE] Found legacy save data, converting...');
-        var gameSave = SaveDataMigrator.migrateFromLegacy(legacySaveData);
-        FlxG.save.mergeData(gameSave.data, true);
-        return gameSave;
+        trace("[SAVE] Found legacy save data. Attempting migration...");
+        try
+        {
+          var gameSave = SaveDataMigrator.migrateFromLegacy(legacySaveData);
+          FlxG.save.mergeData(gameSave.data, true);
+          return gameSave;
+        }
+        catch (e:Dynamic)
+        {
+          trace("[SAVE] Legacy save migration failed: " + e);
+          return new Save(); // Fallback to a new save
+        }
       }
       else
       {
-        trace('[SAVE] No legacy save data found.');
+        trace("[SAVE] No legacy save data found. Creating new save...");
         var gameSave = new Save();
         FlxG.save.mergeData(gameSave.data, true);
         return gameSave;
@@ -1014,20 +1037,28 @@ class Save
     }
     else
     {
-      trace('[SAVE] Found existing save data.');
-      var gameSave = SaveDataMigrator.migrate(FlxG.save.data);
-      FlxG.save.mergeData(gameSave.data, true);
-
-      return gameSave;
+      trace("[SAVE] Existing save data found. Attempting migration...");
+      try
+      {
+        var gameSave = SaveDataMigrator.migrate(FlxG.save.data);
+        if (gameSave == null || gameSave.data == null)
+        {
+          throw "Invalid save data.";
+        }
+        FlxG.save.mergeData(gameSave.data, true);
+        return gameSave;
+      }
+      catch (e:Dynamic)
+      {
+        trace("[SAVE] Migration failed: " + e);
+        return new Save(); // Fallback to a new save
+      }
     }
   }
 
   public static function archiveBadSaveData(data:Dynamic):Int
   {
-    // We want to save this somewhere so we can try to recover it for the user in the future!
-
     final RECOVERY_SLOT_START = 1000;
-
     return writeToAvailableSlot(RECOVERY_SLOT_START, data);
   }
 
@@ -1045,32 +1076,36 @@ class Save
     }
   }
 
-  static function fetchFromSlotRaw(slot:Int):Null<Dynamic>
+  public static function fetchFromSlotRaw(slot:Int):Null<Dynamic>
   {
     var targetSaveData = new FlxSave();
-    targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
-    if (targetSaveData.isEmpty()) return null;
-    return targetSaveData.data;
+    if (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    {
+      trace("[SAVE] Failed to bind slot $slot for raw fetch.");
+      return null;
+    }
+    return targetSaveData.isEmpty() ? null : targetSaveData.data;
   }
 
-  static function writeToAvailableSlot(slot:Int, data:Dynamic):Int
+  public static function writeToAvailableSlot(slot:Int, data:Dynamic):Int
   {
     trace('[SAVE] Finding slot to write data to (starting with ${slot})...');
-
     var targetSaveData = new FlxSave();
-    targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
-    while (!targetSaveData.isEmpty())
+    while (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH) || !targetSaveData.isEmpty())
     {
-      // Keep trying to bind to slots until we find an empty slot.
-      trace('[SAVE] Slot ${slot} is taken, continuing...');
+      trace("[SAVE] Slot ${slot} is unavailable. Trying the next slot...");
       slot++;
-      targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
     }
 
-    trace('[SAVE] Writing data to slot ${slot}...');
+    trace("[SAVE] Writing data to slot ${slot}...");
     targetSaveData.mergeData(data, true);
+    if (!targetSaveData.flush())
+    {
+      trace("[SAVE] Failed to flush data to slot ${slot}.");
+      return -1;
+    }
 
-    trace('[SAVE] Data written to slot ${slot}!');
+    trace("[SAVE] Data successfully written to slot ${slot}!");
     return slot;
   }
 
@@ -1079,11 +1114,21 @@ class Save
    * @param slot The slot number to check.
    * @return Whether the slot is not empty.
    */
-  static function querySlot(slot:Int):Bool
+  public static function querySlot(slot:Int):Bool
   {
     var targetSaveData = new FlxSave();
-    targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
-    return !targetSaveData.isEmpty();
+    if (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    {
+      trace('[SAVE] Failed to bind slot $slot for query.');
+      return false;
+    }
+    if (targetSaveData.isEmpty())
+    {
+      trace('[SAVE] Slot $slot is empty.');
+      return false;
+    }
+    trace('[SAVE] Slot $slot contains data.');
+    return true;
   }
 
   /**
@@ -1092,7 +1137,7 @@ class Save
    * @param end The ending slot number to check.
    * @return The first slot in the range that is not empty, or `-1` if none are.
    */
-  static function querySlotRange(start:Int, end:Int):Int
+  public static function querySlotRange(start:Int, end:Int):Int
   {
     for (i in start...end)
     {
@@ -1104,22 +1149,22 @@ class Save
     return -1;
   }
 
-  static function fetchLegacySaveData():Null<RawSaveData_v1_0_0>
+  public static function fetchLegacySaveData():Null<RawSaveData_v1_0_0>
   {
     trace("[SAVE] Checking for legacy save data...");
-    var legacySave:FlxSave = new FlxSave();
-    legacySave.bind(SAVE_NAME_LEGACY, SAVE_PATH_LEGACY);
+    var legacySave = new FlxSave();
+    if (!legacySave.bind(SAVE_NAME_LEGACY, SAVE_PATH_LEGACY))
+    {
+      trace("[SAVE] Failed to bind legacy save data.");
+      return null;
+    }
     if (legacySave.isEmpty())
     {
       trace("[SAVE] No legacy save data found.");
       return null;
     }
-    else
-    {
-      trace("[SAVE] Legacy save data found.");
-      trace(legacySave.data);
-      return cast legacySave.data;
-    }
+    trace("[SAVE] Legacy save data found.");
+    return cast legacySave.data;
   }
 
   /**
@@ -1132,7 +1177,7 @@ class Save
   {
     var ignoreNullOptionals = true;
     var writer = new json2object.JsonWriter<RawSaveData>(ignoreNullOptionals);
-    return writer.write(data, pretty ? '  ' : null);
+    return writer.write(data, pretty ? "  " : null);
   }
 
   public function updateVersionToLatest():Void

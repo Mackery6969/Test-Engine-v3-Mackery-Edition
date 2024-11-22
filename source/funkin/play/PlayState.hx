@@ -346,6 +346,26 @@ class PlayState extends MusicBeatSubState
   public var poisonTimes:Int = 0;
 
   /**
+   * If the player has not missed any notes.
+   */
+  public var isFC:Bool = false;
+
+  /**
+   * If the player has not missed any notes AND has hit Sick on every note.
+   */
+  public var isSFC:Bool = false;
+
+  /**
+   * If the player has not missed any notes AND has hit Sick or Good on every note.
+   */
+  public var isGFC:Bool = false;
+
+  /**
+   * If the player has not missed more than 10 notes.
+   */
+  public var isSDCB:Bool = false;
+
+  /**
    * Whether the inputs should be disabled for whatever reason... used for the stage edit lol!
    */
   public var disableKeys:Bool = false;
@@ -842,6 +862,45 @@ class PlayState extends MusicBeatSubState
     return true;
   }
 
+  function updateComboShit():Void
+  {
+    if (Highscore.tallies.totalNotes == 0 || isBotPlayMode) return;
+
+    if (Highscore.tallies.missed == 0)
+    {
+      isFC = true;
+
+      if (Highscore.tallies.sick > 0 && Highscore.tallies.good == 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+      {
+        isSFC = true;
+      }
+      else if (Highscore.tallies.good > 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+      {
+        isSFC = false;
+        isGFC = true;
+      }
+      else
+      {
+        isGFC = false;
+      }
+    }
+    else if (Highscore.tallies.missed > 0 && Highscore.tallies.missed <= 10)
+    {
+      isSDCB = true;
+    }
+    else
+    {
+      isSDCB = false;
+    }
+
+    if (Highscore.tallies.missed != 0)
+    {
+      isFC = false;
+      isSFC = false;
+      isGFC = false;
+    }
+  }
+
   public override function update(elapsed:Float):Void
   {
     // TOTAL: 9.42% CPU Time when profiled in VS 2019.
@@ -853,6 +912,7 @@ class PlayState extends MusicBeatSubState
     var list = FlxG.sound.list;
     updateHealthBar();
     updateScoreText();
+    updateComboShit();
 
     // Handle restarting the song when needed (player death or pressing Retry)
     if (needsReset)
@@ -2221,11 +2281,28 @@ class PlayState extends MusicBeatSubState
     var commaSeparated:Bool = true;
     if (!Preferences.oldScoreText)
     {
-      /*
-          infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-         */
       infoText.screenCenter(X);
-      if (misses == 0)
+      if (isSFC)
+      {
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' (SFC) | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
+      }
+      else if (isGFC)
+      {
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' (GFC) | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
+      }
+      else if (isFC)
       {
         infoText.text = ' | Score: '
           + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
@@ -2235,7 +2312,7 @@ class PlayState extends MusicBeatSubState
           + getSongAccuracy()
           + ' | ';
       }
-      else if (misses <= 10 && misses > 0)
+      else if (isSDCB)
       {
         infoText.text = ' | Score: '
           + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
@@ -3135,7 +3212,7 @@ class PlayState extends MusicBeatSubState
       // adds current song data into the tallies for the level (story levels)
       Highscore.talliesLevel = Highscore.combineTallies(Highscore.tallies, Highscore.talliesLevel);
 
-      if (!isPracticeMode && !isBotPlayMode && SongLaunchState.saveScore)
+      if (!isPracticeMode && !isBotPlayMode && !SongLaunchState.saveScore)
       {
         isNewHighscore = Save.instance.isSongHighScore(currentSong.id, suffixedDifficulty, data);
 

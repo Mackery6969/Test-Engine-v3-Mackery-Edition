@@ -1,7 +1,6 @@
 package funkin.ui.story;
 
 import flixel.addons.transition.FlxTransitionableState;
-import funkin.ui.SongLaunchState;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.text.FlxText;
@@ -25,6 +24,8 @@ import funkin.ui.transition.LoadingState;
 import funkin.ui.transition.StickerSubState;
 import funkin.util.MathUtil;
 import openfl.utils.Assets;
+import funkin.ui.SongLaunchState;
+import funkin.Preferences;
 #if FEATURE_DISCORD_RPC
 import funkin.api.discord.DiscordClient;
 #end
@@ -544,38 +545,28 @@ class StoryMenuState extends MusicBeatState
       prop.playConfirm();
     }
 
+    Paths.setCurrentLevel(currentLevel.id);
+
+    PlayStatePlaylist.playlistSongIds = currentLevel.getSongs();
+    PlayStatePlaylist.isStoryMode = true;
+    PlayStatePlaylist.campaignScore = 0;
+
+    var targetSongId:String = PlayStatePlaylist.playlistSongIds.shift();
+
+    var targetSong:Song = SongRegistry.instance.fetchEntry(targetSongId);
+
+    PlayStatePlaylist.campaignId = currentLevel.id;
+    PlayStatePlaylist.campaignTitle = currentLevel.getTitle();
+    PlayStatePlaylist.campaignDifficulty = currentDifficultyId;
+
+    Highscore.talliesLevel = new funkin.Highscore.Tallies();
+
+    var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
+
     new FlxTimer().start(1, function(tmr:FlxTimer) {
       FlxTransitionableState.skipNextTransIn = false;
       FlxTransitionableState.skipNextTransOut = false;
-
-      if (!Preferences.songLaunchScreen)
-      {
-        Paths.setCurrentLevel(currentLevel.id);
-
-        Highscore.talliesLevel = new funkin.Highscore.Tallies();
-
-        PlayStatePlaylist.playlistSongIds = currentLevel.getSongs();
-        PlayStatePlaylist.isStoryMode = true;
-        PlayStatePlaylist.campaignScore = 0;
-
-        var targetSongId:String = PlayStatePlaylist.playlistSongIds.shift();
-
-        var targetSong:Song = SongRegistry.instance.fetchEntry(targetSongId);
-
-        PlayStatePlaylist.campaignId = currentLevel.id;
-        PlayStatePlaylist.campaignTitle = currentLevel.getTitle();
-        PlayStatePlaylist.campaignDifficulty = currentDifficultyId;
-
-        var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
-
-        LoadingState.loadPlayState(
-          {
-            targetSong: targetSong,
-            targetDifficulty: PlayStatePlaylist.campaignDifficulty,
-            targetVariation: targetVariation
-          }, true);
-      }
-      else
+      if (Preferences.songLaunchScreen)
       {
         // var targetVariation:String = targetSong.getFirstValidVariation(PlayStatePlaylist.campaignDifficulty);
 
@@ -588,6 +579,15 @@ class StoryMenuState extends MusicBeatState
         SongLaunchState.curDifficulty = currentDifficultyId;
 
         FlxG.switchState(() -> new SongLaunchState(true));
+      }
+      else
+      {
+        LoadingState.loadPlayState(
+          {
+            targetSong: targetSong,
+            targetDifficulty: PlayStatePlaylist.campaignDifficulty,
+            targetVariation: targetVariation
+          }, true);
       }
     });
   }

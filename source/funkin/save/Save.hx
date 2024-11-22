@@ -7,10 +7,12 @@ import funkin.play.scoring.Scoring;
 import funkin.play.scoring.Scoring.ScoringRank;
 import funkin.save.migrator.RawSaveData_v1_0_0;
 import funkin.save.migrator.SaveDataMigrator;
+import funkin.save.migrator.SaveDataMigrator;
 import funkin.ui.debug.charting.ChartEditorState.ChartEditorLiveInputStyle;
 import funkin.ui.debug.charting.ChartEditorState.ChartEditorTheme;
 import funkin.ui.debug.stageeditor.StageEditorState.StageEditorTheme;
 import funkin.util.SerializerUtil;
+import thx.semver.Version;
 import thx.semver.Version;
 
 @:nullSafety
@@ -20,7 +22,7 @@ class Save
   public static final SAVE_DATA_VERSION_RULE:thx.semver.VersionRule = "2.0.x";
 
   // We load this version's saves from a new save path, to maintain SOME level of backwards compatibility.
-  static final SAVE_PATH:String = 'TECrew';
+  static final SAVE_PATH:String = 'MackeryGames';
   static final SAVE_NAME:String = 'TestEngine';
 
   static final SAVE_PATH_LEGACY:String = 'ninjamuffin99';
@@ -40,12 +42,22 @@ class Save
 
   var data:RawSaveData;
 
+  /**
+   * Loads the save game
+   * @return Save
+   */
   public static function load():Save
   {
     trace("[SAVE] Loading save...");
-
-    // Bind save data.
-    return loadFromSlot(1);
+    if (querySlot(1))
+    {
+      return loadFromSlot(1);
+    }
+    else
+    {
+      trace("[SAVE] No save data found in slot 1. Creating a new save...");
+      return new Save();
+    }
   }
 
   /**
@@ -91,24 +103,37 @@ class Save
         {
           // Reasonable defaults.
           framerate: 60,
+          quality: 'High',
           naughtyness: true,
           downscroll: false,
+          ghostTapping: true,
           flashingLights: true,
+          oldScoreText: false,
           zoomCamera: true,
           debugDisplay: false,
           autoPause: true,
+          songLaunchScreen: true,
+          instrumentalSelect: false,
           inputOffset: 0,
           audioVisualOffset: 0,
           unlockedFramerate: false,
+          experimentalOptions: #if (debug) true, #else false, #end
 
-          ghostTapping: true,
-          oldScoreText: false,
-          instrumentalSelect: false,
-          songLaunchScreen: true,
-          quality: "High",
-          uiSkin: "normal",
+          // experiments
+          comboMilestone: false,
 
-          seenFlashingState: false, // used for making sure flashing menu doesent come up again.
+          // MODIFIERS
+
+          botPlay: false,
+          practice: false,
+          songSpeed: 100,
+          instaDeathMode: 'None',
+          healthGain: 100,
+          healthLoss: 100,
+          healthDrainType: 'None',
+          healthDrainAmount: 0.02,
+
+          seenFlashingState: false,
 
           controls:
             {
@@ -124,18 +149,6 @@ class Save
                   gamepad: {},
                 },
             },
-        },
-
-      modifiers:
-        {
-          practice: false,
-          botPlay: false,
-          songSpeed: 100,
-          instaDeathMode: 'None',
-          healthGain: 100,
-          healthLoss: 100,
-          healthDrainType: 'None',
-          healthDrainAmount: 0.02,
         },
 
       mods:
@@ -185,16 +198,6 @@ class Save
   function get_options():SaveDataOptions
   {
     return data.options;
-  }
-
-  /**
-   * NOTE: Modifications will not be saved without calling 'Save.flush()'!
-   */
-  public var modifiers(get, never):SaveDataModifiers;
-
-  function get_modifiers():SaveDataModifiers
-  {
-    return data.modifiers;
   }
 
   /**
@@ -981,36 +984,52 @@ class Save
    */
   public function flush():Void
   {
-    FlxG.save.flush();
+    trace('[SAVE] Flushing save data...');
+    if (!FlxG.save.flush())
+    {
+      trace('[SAVE] Failed to flush save data. Check file permissions or storage availability.');
+    }
   }
 
   /**
    * If you set slot to `2`, it will load an independe
    * @param slot
    */
-  static function loadFromSlot(slot:Int):Save
+  public static function loadFromSlot(slot:Int):Save
   {
     trace("[SAVE] Loading save from slot " + slot + "...");
 
-    // Prevent crashes if the save data is corrupted.
+    // Prevent crashes if the save data is corrupted
     SerializerUtil.initSerializer();
 
-    FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH);
+    if (!FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    {
+      trace("[SAVE] Failed to bind save for slot $slot at $SAVE_PATH.");
+      return new Save(); // Return new save on failure
+    }
 
     if (FlxG.save.isEmpty())
     {
-      trace('[SAVE] Save data is empty, checking for legacy save data...');
+      trace("[SAVE] Save data is empty. Checking for legacy save data...");
       var legacySaveData = fetchLegacySaveData();
       if (legacySaveData != null)
       {
-        trace('[SAVE] Found legacy save data, converting...');
-        var gameSave = SaveDataMigrator.migrateFromLegacy(legacySaveData);
-        FlxG.save.mergeData(gameSave.data, true);
-        return gameSave;
+        trace("[SAVE] Found legacy save data. Attempting migration...");
+        try
+        {
+          var gameSave = SaveDataMigrator.migrateFromLegacy(legacySaveData);
+          FlxG.save.mergeData(gameSave.data, true);
+          return gameSave;
+        }
+        catch (e:Dynamic)
+        {
+          trace("[SAVE] Legacy save migration failed: " + e);
+          return new Save(); // Fallback to a new save
+        }
       }
       else
       {
-        trace('[SAVE] No legacy save data found.');
+        trace("[SAVE] No legacy save data found. Creating new save...");
         var gameSave = new Save();
         FlxG.save.mergeData(gameSave.data, true);
         return gameSave;
@@ -1018,20 +1037,28 @@ class Save
     }
     else
     {
-      trace('[SAVE] Found existing save data.');
-      var gameSave = SaveDataMigrator.migrate(FlxG.save.data);
-      FlxG.save.mergeData(gameSave.data, true);
-
-      return gameSave;
+      trace("[SAVE] Existing save data found. Attempting migration...");
+      try
+      {
+        var gameSave = SaveDataMigrator.migrate(FlxG.save.data);
+        if (gameSave == null || gameSave.data == null)
+        {
+          throw "Invalid save data.";
+        }
+        FlxG.save.mergeData(gameSave.data, true);
+        return gameSave;
+      }
+      catch (e:Dynamic)
+      {
+        trace("[SAVE] Migration failed: " + e);
+        return new Save(); // Fallback to a new save
+      }
     }
   }
 
   public static function archiveBadSaveData(data:Dynamic):Int
   {
-    // We want to save this somewhere so we can try to recover it for the user in the future!
-
     final RECOVERY_SLOT_START = 1000;
-
     return writeToAvailableSlot(RECOVERY_SLOT_START, data);
   }
 
@@ -1049,32 +1076,36 @@ class Save
     }
   }
 
-  static function fetchFromSlotRaw(slot:Int):Null<Dynamic>
+  public static function fetchFromSlotRaw(slot:Int):Null<Dynamic>
   {
     var targetSaveData = new FlxSave();
-    targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
-    if (targetSaveData.isEmpty()) return null;
-    return targetSaveData.data;
+    if (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    {
+      trace("[SAVE] Failed to bind slot $slot for raw fetch.");
+      return null;
+    }
+    return targetSaveData.isEmpty() ? null : targetSaveData.data;
   }
 
-  static function writeToAvailableSlot(slot:Int, data:Dynamic):Int
+  public static function writeToAvailableSlot(slot:Int, data:Dynamic):Int
   {
     trace('[SAVE] Finding slot to write data to (starting with ${slot})...');
-
     var targetSaveData = new FlxSave();
-    targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
-    while (!targetSaveData.isEmpty())
+    while (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH) || !targetSaveData.isEmpty())
     {
-      // Keep trying to bind to slots until we find an empty slot.
-      trace('[SAVE] Slot ${slot} is taken, continuing...');
+      trace("[SAVE] Slot ${slot} is unavailable. Trying the next slot...");
       slot++;
-      targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
     }
 
-    trace('[SAVE] Writing data to slot ${slot}...');
+    trace("[SAVE] Writing data to slot ${slot}...");
     targetSaveData.mergeData(data, true);
+    if (!targetSaveData.flush())
+    {
+      trace("[SAVE] Failed to flush data to slot ${slot}.");
+      return -1;
+    }
 
-    trace('[SAVE] Data written to slot ${slot}!');
+    trace("[SAVE] Data successfully written to slot ${slot}!");
     return slot;
   }
 
@@ -1083,11 +1114,21 @@ class Save
    * @param slot The slot number to check.
    * @return Whether the slot is not empty.
    */
-  static function querySlot(slot:Int):Bool
+  public static function querySlot(slot:Int):Bool
   {
     var targetSaveData = new FlxSave();
-    targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH);
-    return !targetSaveData.isEmpty();
+    if (!targetSaveData.bind('$SAVE_NAME${slot}', SAVE_PATH))
+    {
+      trace('[SAVE] Failed to bind slot $slot for query.');
+      return false;
+    }
+    if (targetSaveData.isEmpty())
+    {
+      trace('[SAVE] Slot $slot is empty.');
+      return false;
+    }
+    trace('[SAVE] Slot $slot contains data.');
+    return true;
   }
 
   /**
@@ -1096,7 +1137,7 @@ class Save
    * @param end The ending slot number to check.
    * @return The first slot in the range that is not empty, or `-1` if none are.
    */
-  static function querySlotRange(start:Int, end:Int):Int
+  public static function querySlotRange(start:Int, end:Int):Int
   {
     for (i in start...end)
     {
@@ -1108,22 +1149,22 @@ class Save
     return -1;
   }
 
-  static function fetchLegacySaveData():Null<RawSaveData_v1_0_0>
+  public static function fetchLegacySaveData():Null<RawSaveData_v1_0_0>
   {
     trace("[SAVE] Checking for legacy save data...");
-    var legacySave:FlxSave = new FlxSave();
-    legacySave.bind(SAVE_NAME_LEGACY, SAVE_PATH_LEGACY);
+    var legacySave = new FlxSave();
+    if (!legacySave.bind(SAVE_NAME_LEGACY, SAVE_PATH_LEGACY))
+    {
+      trace("[SAVE] Failed to bind legacy save data.");
+      return null;
+    }
     if (legacySave.isEmpty())
     {
       trace("[SAVE] No legacy save data found.");
       return null;
     }
-    else
-    {
-      trace("[SAVE] Legacy save data found.");
-      trace(legacySave.data);
-      return cast legacySave.data;
-    }
+    trace("[SAVE] Legacy save data found.");
+    return cast legacySave.data;
   }
 
   /**
@@ -1136,7 +1177,7 @@ class Save
   {
     var ignoreNullOptionals = true;
     var writer = new json2object.JsonWriter<RawSaveData>(ignoreNullOptionals);
-    return writer.write(data, pretty ? '  ' : null);
+    return writer.write(data, pretty ? "  " : null);
   }
 
   public function updateVersionToLatest():Void
@@ -1177,14 +1218,6 @@ typedef RawSaveData =
    */
   var options:SaveDataOptions;
 
-  /**
-   * The user's modifier preferences.
-   */
-  var modifiers:SaveDataModifiers;
-
-  /**
-   * Unlocks for in-game stuff.
-   */
   var unlocks:SaveDataUnlocks;
 
   /**
@@ -1312,6 +1345,8 @@ typedef SaveDataOptions =
    */
   var framerate:Int;
 
+  var quality:String;
+
   /**
    * Whether some particularly foul language is displayed.
    * @default `true`
@@ -1324,11 +1359,15 @@ typedef SaveDataOptions =
    */
   var downscroll:Bool;
 
+  var ghostTapping:Bool;
+
   /**
    * If disabled, flashing lights in the main menu and other areas will be less intense.
    * @default `true`
    */
   var flashingLights:Bool;
+
+  var oldScoreText:Bool;
 
   /**
    * If disabled, the camera bump synchronized to the beat.
@@ -1347,6 +1386,10 @@ typedef SaveDataOptions =
    * @default `true`
    */
   var autoPause:Bool;
+
+  var songLaunchScreen:Bool;
+
+  var instrumentalSelect:Bool;
 
   /**
    * Offset the user's inputs by this many ms.
@@ -1367,42 +1410,36 @@ typedef SaveDataOptions =
   var unlockedFramerate:Bool;
 
   /**
-   * No penalty for pressing a note when none is there
-   * @default 'true'
-   */
-  var ghostTapping:Bool;
-
-  /**
-   * Allows you to select a different instrumental (in old vers it defaulted to true which was VERY annoying)
+   * Enables Experimental Options Menu
    * @default 'false'
    */
-  var instrumentalSelect:Bool;
+  var experimentalOptions:Bool;
 
   /**
-   * allows the user to select modifiers.
-   * @default 'true'
-   */
-  var songLaunchScreen:Bool;
-
-  /**
-   * Original Friday Night Funkin' Score Text below the heath bar.
+   * if the flashing state has been seen, we dont want trouble before you even enable it..
    * @default 'false'
    */
-  var oldScoreText:Bool;
-
-  /**
-   * The quality of the game, setting this to Low disables some objects.
-   * @default 'High'
-   */
-  var quality:String;
-
-  /**
-   * skins used for the ui, right now there is only normal and alternate but i plan on adding mod support!
-   * @default 'normal'
-   */
-  var uiSkin:String;
-
   var seenFlashingState:Bool;
+
+  // EXPERIMENTS
+  var comboMilestone:Bool;
+
+  // MODIFIERS
+  var botPlay:Bool;
+
+  var practice:Bool;
+
+  var songSpeed:Int;
+
+  var instaDeathMode:String;
+
+  var healthGain:Int;
+
+  var healthLoss:Int;
+
+  var healthDrainType:String;
+
+  var healthDrainAmount:Float;
 
   var controls:
     {
@@ -1418,57 +1455,6 @@ typedef SaveDataOptions =
         };
     };
 };
-
-typedef SaveDataModifiers =
-{
-  /**
-   * Practice Mode, you cannot die.
-   * @default 'false'
-   */
-  var practice:Bool;
-
-  /**
-   * Automatically plays the song for you.
-   * @default 'false'
-   */
-  var botPlay:Bool;
-
-  /**
-   * The speed of the song.
-   * @default '100'
-   */
-  var songSpeed:Int;
-
-  /**
-   * The type of instant death, theres None, SFC, GFC, and FC)
-   * @default 'None'
-   */
-  var instaDeathMode:String;
-
-  /**
-   * The multiplier of health gained.
-   * @default '100'
-   */
-  var healthGain:Int;
-
-  /**
-   * The multiplier of health lost.
-   * @default '100'
-   */
-  var healthLoss:Int;
-
-  /**
-   * The type of health drain, theres None, Penalty, Fair Fight, and Constant.
-   * @default 'None'
-   */
-  var healthDrainType:String;
-
-  /**
-   * The amount of health drain, only takes effect if Fair Fight or Constant is selected.
-   * @default '0.02'
-   */
-  var healthDrainAmount:Float;
-}
 
 /**
  * An anonymous structure containing a specific player's bound keys.

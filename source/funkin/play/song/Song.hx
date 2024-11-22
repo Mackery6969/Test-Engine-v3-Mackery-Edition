@@ -87,6 +87,11 @@ class Song implements IPlayStateScriptedClass implements IRegistryEntry<SongMeta
    */
   final difficulties:Map<String, Map<String, SongDifficulty>>;
 
+  public function getDifficulties():Map<String, Map<String, SongDifficulty>>
+  {
+    return difficulties;
+  }
+
   /**
    * The list of variations a song has.
    */

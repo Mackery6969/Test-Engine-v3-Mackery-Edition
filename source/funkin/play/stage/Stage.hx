@@ -25,7 +25,6 @@ import funkin.data.stage.StageRegistry;
 import funkin.play.stage.StageProp;
 import funkin.util.SortUtil;
 import funkin.util.assets.FlxAnimationUtil;
-import funkin.Preferences;
 
 typedef StagePropGroup = FlxTypedSpriteGroup<StageProp>;
 
@@ -172,13 +171,6 @@ class Stage extends FlxSpriteGroup implements IPlayStateScriptedClass implements
     for (dataProp in _data.props)
     {
       trace('  Placing prop: ${dataProp.name} (${dataProp.assetPath})');
-
-      // Check if the sprite should only be loaded in high quality
-      if (dataProp.isHighQualityOnly && Preferences.quality != "High")
-      {
-        trace('Skipping prop ${dataProp.name} because quality setting is not high');
-        continue;
-      }
 
       var isSolidColor = dataProp.assetPath.startsWith('#');
       var isAnimated = dataProp.animations.length > 0;

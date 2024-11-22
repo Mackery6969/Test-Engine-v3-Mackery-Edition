@@ -57,12 +57,23 @@ class PreferencesMenu extends Page
     createPrefItemCheckbox('Naughtyness', 'Toggle displaying raunchy content', function(value:Bool):Void {
       Preferences.naughtyness = value;
     }, Preferences.naughtyness);
+    createPrefItemEnum('Quality', 'Allows you to change the quality of the backgrounds, useful on slower computers.',
+      ['Low' => "Low Quality", 'High' => "High/Medium Quality"], function(value:String):Void {
+        Preferences.quality = value;
+    }, Preferences.quality);
     createPrefItemCheckbox('Downscroll', 'Enable to make notes move downwards', function(value:Bool):Void {
       Preferences.downscroll = value;
     }, Preferences.downscroll);
+    createPrefItemCheckbox('Ghost Tapping', 'Enable to have no penalty for pressing a note when none is there', function(value:Bool):Void {
+      Preferences.ghostTapping = value;
+    }, Preferences.ghostTapping);
     createPrefItemCheckbox('Flashing Lights', 'Disable to dampen flashing effects', function(value:Bool):Void {
       Preferences.flashingLights = value;
     }, Preferences.flashingLights);
+    createPrefItemCheckbox('Old Score Text',
+      'Toggles the use of the original score text in Friday Night Funkin\', the engine revamps how it works when disabled.', function(value:Bool):Void {
+        Preferences.oldScoreText = value;
+    }, Preferences.oldScoreText);
     createPrefItemCheckbox('Camera Zooming on Beat', 'Disable to stop the camera bouncing to the song', function(value:Bool):Void {
       Preferences.zoomCamera = value;
     }, Preferences.zoomCamera);
@@ -72,6 +83,13 @@ class PreferencesMenu extends Page
     createPrefItemCheckbox('Auto Pause', 'Automatically pause the game when it loses focus', function(value:Bool):Void {
       Preferences.autoPause = value;
     }, Preferences.autoPause);
+    createPrefItemCheckbox('Song Modifier Select', 'Opens a menu upon song select allowing you to choose modifiers if enabled', function(value:Bool):Void {
+      Preferences.songLaunchScreen = value;
+    }, Preferences.songLaunchScreen);
+    createPrefItemCheckbox('Instrumental Selector',
+      '(Only works if you have Pico unlocked.) if enabled it will let you select what Instrumental on a song you want.', function(value:Bool):Void {
+        Preferences.instrumentalSelect = value;
+    }, Preferences.instrumentalSelect);
 
     #if web
     createPrefItemCheckbox('Unlocked Framerate', 'Enable to unlock the framerate', function(value:Bool):Void {
@@ -82,6 +100,11 @@ class PreferencesMenu extends Page
       Preferences.framerate = Std.int(value);
     }, null, Preferences.framerate, 30, 300, 5, 0);
     #end
+
+    createPrefItemCheckbox('Experimental Settings',
+      'If Enabled, The Experimental Tab will be open to use any Experimental Features, Although expect crashes and whatnot..', function(value:Bool):Void {
+        Preferences.experimentalOptions = value;
+    }, Preferences.experimentalOptions);
   }
 
   override function update(elapsed:Float):Void

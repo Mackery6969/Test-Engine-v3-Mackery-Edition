@@ -56,7 +56,6 @@ import funkin.play.stage.Stage;
 import funkin.save.Save;
 import funkin.ui.debug.charting.ChartEditorState;
 import funkin.ui.debug.stage.StageOffsetSubState;
-import funkin.ui.SongLaunchState;
 import funkin.ui.mainmenu.MainMenuState;
 import funkin.ui.MusicBeatSubState;
 import funkin.ui.options.PreferencesMenu;
@@ -68,6 +67,7 @@ import lime.ui.Haptic;
 import openfl.display.BitmapData;
 import openfl.geom.Rectangle;
 import openfl.Lib;
+import funkin.ui.SongLaunchState;
 #if FEATURE_DISCORD_RPC
 import funkin.api.discord.DiscordClient;
 #end
@@ -223,7 +223,7 @@ class PlayState extends MusicBeatSubState
    * Play back the song at this speed.
    * @default `1.0` for normal speed.
    */
-  public var playbackRate:Float = Preferences.songSpeed;
+  public var playbackRate:Float = 1.0;
 
   /**
    * An empty FlxObject contained in the scene.
@@ -316,13 +316,13 @@ class PlayState extends MusicBeatSubState
    * Whether the game is currently in Practice Mode.
    * If true, player will not lose gain or lose score from notes.
    */
-  public var isPracticeMode:Bool = Preferences.botPlay;
+  public var isPracticeMode:Bool = false;
 
   /**
    * Whether the game is currently in Bot Play Mode.
    * If true, player will not lose gain or lose score from notes.
    */
-  public var isBotPlayMode:Bool = Preferences.botPlay;
+  public var isBotPlayMode:Bool = false;
 
   /**
    * Whether the player has dropped below zero health,
@@ -344,6 +344,26 @@ class PlayState extends MusicBeatSubState
    * How many times the player has been poisoned
    */
   public var poisonTimes:Int = 0;
+
+  /**
+   * If the player has not missed any notes.
+   */
+  public var isFC:Bool = false;
+
+  /**
+   * If the player has not missed any notes AND has hit Sick on every note.
+   */
+  public var isSFC:Bool = false;
+
+  /**
+   * If the player has not missed any notes AND has hit Sick or Good on every note.
+   */
+  public var isGFC:Bool = false;
+
+  /**
+   * If the player has not missed more than 10 notes.
+   */
+  public var isSDCB:Bool = false;
 
   /**
    * Whether the inputs should be disabled for whatever reason... used for the stage edit lol!
@@ -410,6 +430,18 @@ class PlayState extends MusicBeatSubState
   var healthLerp:Float = Constants.HEALTH_STARTING;
 
   /**
+   * helper variable for accuracy.
+   * All notess in the song up to this point.
+   */
+  public var totalNotes:Int = 0;
+
+  /**
+   * helper variable for accuracy.
+   * All notes that have been pressed at a percent.
+   */
+  public var totalNotesHit:Float = 0;
+
+  /**
    * How long the user has held the "Skip Video Cutscene" button for.
    */
   var skipHeldTimer:Float = 0;
@@ -429,7 +461,7 @@ class PlayState extends MusicBeatSubState
   /**
    * False as long as the countdown has not finished yet.
    */
-  var startingSong:Bool = false;
+  public var startingSong:Bool = false;
 
   /**
    * Track if we currently have the music paused for a Pause substate, so we can unpause it when we return.
@@ -830,6 +862,45 @@ class PlayState extends MusicBeatSubState
     return true;
   }
 
+  function updateComboShit():Void
+  {
+    if (Highscore.tallies.totalNotes == 0 || isBotPlayMode) return;
+
+    if (Highscore.tallies.missed == 0)
+    {
+      isFC = true;
+
+      if (Highscore.tallies.sick > 0 && Highscore.tallies.good == 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+      {
+        isSFC = true;
+      }
+      else if (Highscore.tallies.good > 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+      {
+        isSFC = false;
+        isGFC = true;
+      }
+      else
+      {
+        isGFC = false;
+      }
+    }
+    else if (Highscore.tallies.missed > 0 && Highscore.tallies.missed <= 10)
+    {
+      isSDCB = true;
+    }
+    else
+    {
+      isSDCB = false;
+    }
+
+    if (Highscore.tallies.missed != 0)
+    {
+      isFC = false;
+      isSFC = false;
+      isGFC = false;
+    }
+  }
+
   public override function update(elapsed:Float):Void
   {
     // TOTAL: 9.42% CPU Time when profiled in VS 2019.
@@ -840,7 +911,8 @@ class PlayState extends MusicBeatSubState
 
     var list = FlxG.sound.list;
     updateHealthBar();
-    updateInfoText();
+    updateScoreText();
+    updateComboShit();
 
     // Handle restarting the song when needed (player death or pressing Retry)
     if (needsReset)
@@ -1131,7 +1203,7 @@ class PlayState extends MusicBeatSubState
     opponentStrumline.clean();
 
     songScore = 0;
-    updateInfoText();
+    updateScoreText();
 
     health = Constants.HEALTH_STARTING;
     healthLerp = health;
@@ -1442,8 +1514,6 @@ class PlayState extends MusicBeatSubState
     if (iconP1 != null) iconP1.onStepHit(Std.int(Conductor.instance.currentStep));
     if (iconP2 != null) iconP2.onStepHit(Std.int(Conductor.instance.currentStep));
 
-    if (Preferences.healthDrainType == "Constant") health -= Preferences.healthDrainAmount;
-
     return true;
   }
 
@@ -1521,17 +1591,56 @@ class PlayState extends MusicBeatSubState
 
     var shouldShowComboText:Bool = false;
     // TODO: Re-enable combo text (how to do this without sections?).
-    // if (currentSong != null)
-    // {
-    //  shouldShowComboText = (Conductor.instance.currentBeat % 8 == 7);
-    //  var daSection = .getSong()[Std.int(Conductor.instance.currentBeat / 16)];
-    //  shouldShowComboText = shouldShowComboText && (daSection != null && daSection.mustHitSection);
-    //  shouldShowComboText = shouldShowComboText && (Highscore.tallies.combo > 5);
-    //
-    //  var daNextSection = .getSong()[Std.int(Conductor.instance.currentBeat / 16) + 1];
-    //  var isEndOfSong = .getSong().length < Std.int(Conductor.instance.currentBeat / 16);
-    //  shouldShowComboText = shouldShowComboText && (isEndOfSong || (daNextSection != null && !daNextSection.mustHitSection));
-    // }
+    // turns out mofo ninjamuffin99 thought of this and removed the files... :[
+    if (currentSong != null && Preferences.comboMilestone)
+    {
+      shouldShowComboText = (Conductor.instance.currentBeat % 8 == 7);
+
+      // Retrieve the current variation and difficulty
+      var currentVariation = currentVariation; // from PlayState
+      var currentDifficulty = currentDifficulty; // from PlayState
+
+      // Access the difficulties map for the active variation
+      var difficulties = currentSong.getDifficulties();
+      var variationDifficulties = difficulties.get(currentVariation);
+
+      if (variationDifficulties != null)
+      {
+        var activeDifficulty = variationDifficulties.get(currentDifficulty);
+
+        if (activeDifficulty != null)
+        {
+          var notes = activeDifficulty.notes;
+          var sectionIndex = Std.int(Conductor.instance.currentBeat / 16);
+          trace("Section Index: " + sectionIndex);
+
+          // Access the current section
+          var daSection = notes[sectionIndex];
+          trace("Current Section: " + (daSection != null));
+          shouldShowComboText = shouldShowComboText && (daSection != null && daSection.getMustHitNote());
+
+          trace("Combo Greater than 5: " + (Highscore.tallies.combo > 5));
+          shouldShowComboText = shouldShowComboText && (Highscore.tallies.combo > 5);
+
+          // Check the next section and end of the song
+          var daNextSection = notes[sectionIndex + 1];
+          var isEndOfSong = sectionIndex >= notes.length;
+          trace("Next Section: " + (daNextSection != null));
+          trace("Is End of Song: " + isEndOfSong);
+
+          shouldShowComboText = isEndOfSong || (daNextSection != null && !daNextSection.getMustHitNote());
+          trace("shouldShowComboText: " + shouldShowComboText);
+        }
+        else
+        {
+          trace("Active difficulty data is null!");
+        }
+      }
+      else
+      {
+        trace("Variation difficulties are null for variation: " + currentVariation);
+      }
+    }
 
     if (shouldShowComboText)
     {
@@ -1540,6 +1649,8 @@ class PlayState extends MusicBeatSubState
       animShit.zIndex = 1100;
       animShit.cameras = [camHUD];
       add(animShit);
+
+      trace("animShit added to the state!");
 
       var frameShit:Float = (1 / 24) * 2; // equals 2 frames in the animation
 
@@ -1613,10 +1724,7 @@ class PlayState extends MusicBeatSubState
     add(healthBar);
 
     // The score text below the health bar.
-    infoText = new FlxText(healthBarBG.x + healthBarBG.width - 190, healthBarBG.y + 30, 0, '', 20);
-    infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-    infoText.scrollFactor.set();
-    infoText.zIndex = 802;
+    infoText = new FlxText(0, healthBarBG.y + 30, 0, '', 20);
     if (!Preferences.oldScoreText)
     {
       infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -1624,8 +1732,11 @@ class PlayState extends MusicBeatSubState
     }
     else
     {
+      infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
       infoText.x = healthBarBG.x + healthBarBG.width - 190;
     }
+    infoText.scrollFactor.set();
+    infoText.zIndex = 802;
     add(infoText);
 
     // Move the health bar to the HUD camera.
@@ -2162,34 +2273,52 @@ class PlayState extends MusicBeatSubState
   /**
      * Updates the position and contents of the score display.
      */
-  function updateInfoText():Void
+  function updateScoreText():Void
   {
-    if (!Preferences.oldScoreText)
-    {
-      infoText.setFormat(Paths.font('vcr.ttf'), 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-      infoText.screenCenter(X);
-    }
     // TODO: Add functionality for modules to update the score text.
-    /*
-        if (isBotPlayMode)
-        {
-          infoText.text = 'Bot Play Enabled';
-        }
-        else
-        {
-       */
     var misses:Int = Highscore.tallies.missed;
     // TODO: Add an option for this maybe?
     var commaSeparated:Bool = true;
     if (!Preferences.oldScoreText)
     {
-      if (misses == 0 && Highscore.tallies.totalNotesHit > 0)
+      infoText.screenCenter(X);
+      if (isSFC)
+      {
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' (SFC) | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
+      }
+      else if (isGFC)
+      {
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' (GFC) | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
+      }
+      else if (isFC)
       {
         infoText.text = ' | Score: '
           + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
           + ' | Misses: '
           + misses
           + ' (FC) | Accuracy: '
+          + getSongAccuracy()
+          + ' | ';
+      }
+      else if (isSDCB)
+      {
+        infoText.text = ' | Score: '
+          + FlxStringUtil.formatMoney(songScore, false, commaSeparated)
+          + ' | Misses: '
+          + misses
+          + ' (SDCB) | Accuracy: '
           + getSongAccuracy()
           + ' | ';
       }
@@ -2208,23 +2337,17 @@ class PlayState extends MusicBeatSubState
     {
       infoText.text = 'Score: ${FlxStringUtil.formatMoney(songScore, false, commaSeparated)}';
     }
-    // }
   }
 
   function getSongAccuracy():String
   {
-    var notesHit = Highscore.tallies.sick + (Highscore.tallies.good * 0.8) + (Highscore.tallies.bad * 0.5);
-    var totalNotes = Highscore.tallies.totalNotesHit + Highscore.tallies.missed;
+    if (totalNotes == 0)
+    {
+      return "??%";
+    }
 
-    if (totalNotes > 0)
-    {
-      var percentage = (notesHit / totalNotes) * 100;
-      return (Math.ceil(percentage * 100) / 100) + '%'; // Rounds up to 2 decimal points
-    }
-    else
-    {
-      return '??%'; // Or handle this case as needed
-    }
+    var percentage:Float = (totalNotesHit / totalNotes) * 100;
+    return '${Math.round(percentage * 100) / 100}%'; // Formats and ensures 2 decimal points
   }
 
   /**
@@ -2232,6 +2355,7 @@ class PlayState extends MusicBeatSubState
      */
   function updateHealthBar():Void
   {
+    // :p
     healthLerp = FlxMath.lerp(healthLerp, health, 0.15);
   }
 
@@ -2269,54 +2393,50 @@ class PlayState extends MusicBeatSubState
     {
       if (note == null) continue;
 
-      // Check if it's a hold note and get the sustain length
-      var sustainLength = note.isHoldNote && note.holdNoteSprite != null ? note.holdNoteSprite.sustainLength : 0;
-      var hitWindowStartHead = note.strumTime + Conductor.instance.inputOffset - Constants.HIT_WINDOW_MS_HEAD;
-      var hitWindowEndHead = note.strumTime + Conductor.instance.inputOffset + Constants.HIT_WINDOW_MS_HEAD;
-      var hitWindowStartTail = note.strumTime + sustainLength + Conductor.instance.inputOffset - Constants.HIT_WINDOW_MS_TAIL;
-      var hitWindowEndTail = note.strumTime + sustainLength + Conductor.instance.inputOffset + Constants.HIT_WINDOW_MS_TAIL;
+      // TODO: Are offsets being accounted for in the correct direction?
+      var hitWindowStart = note.strumTime + Conductor.instance.inputOffset - Constants.HIT_WINDOW_MS;
+      var hitWindowCenter = note.strumTime + Conductor.instance.inputOffset;
+      var hitWindowEnd = note.strumTime + Conductor.instance.inputOffset + Constants.HIT_WINDOW_MS;
 
-      if (note.isHoldNote && note.holdNoteSprite != null)
-      {
-        note.holdNoteSprite.alpha = 0.75; // Set transparency to 50%
-      }
-
-      // Handle missed head note
-      if (Conductor.instance.songPosition > hitWindowEndHead)
+      if (Conductor.instance.songPosition > hitWindowEnd)
       {
         if (note.hasMissed || note.hasBeenHit) continue;
+
         note.tooEarly = false;
         note.mayHit = false;
         note.hasMissed = true;
+
         if (note.holdNoteSprite != null)
         {
           note.holdNoteSprite.missedNote = true;
         }
       }
-      // Handle hitting the head note
-      else if (Conductor.instance.songPosition > note.strumTime)
+      else if (Conductor.instance.songPosition > hitWindowCenter)
       {
         if (note.hasBeenHit) continue;
 
-        if (Preferences.healthDrainType == "Fair Fight" && health >= (Constants.HEALTH_MIN + 0.05))
-        {
-          health -= Preferences.healthDrainAmount;
-        }
+        // Call an event to allow canceling the note hit.
+        // NOTE: This is what handles the character animations!
 
         var event:NoteScriptEvent = new HitNoteScriptEvent(note, 0.0, 0, 'perfect', false, 0);
         dispatchEvent(event);
+
+        // Calling event.cancelEvent() skips all the other logic! Neat!
         if (event.eventCanceled) continue;
 
+        // Command the opponent to hit the note on time.
+        // NOTE: This is what handles the strumline and cleaning up the note itself!
         opponentStrumline.hitNote(note);
+
         if (note.holdNoteSprite != null)
         {
           opponentStrumline.playNoteHoldCover(note.holdNoteSprite);
         }
       }
-      // Prepare for hitting the note (before the note timing)
-      else if (Conductor.instance.songPosition > hitWindowStartHead)
+      else if (Conductor.instance.songPosition > hitWindowStart)
       {
         if (note.hasBeenHit || note.hasMissed) continue;
+
         note.tooEarly = false;
         note.mayHit = true;
         note.hasMissed = false;
@@ -2336,24 +2456,23 @@ class PlayState extends MusicBeatSubState
     {
       if (holdNote == null || !holdNote.alive) continue;
 
-      if (Preferences.healthDrainType == "Fair Fight" && health >= (Constants.HEALTH_MIN + 0.05))
-      {
-        // health -= Preferences.healthDrainAmount / 24;
-      }
-
-      // Hold notes should continue hitting during the sustain period
+      // While the hold note is being hit, and there is length on the hold note...
       if (holdNote.hitNote && !holdNote.missedNote && holdNote.sustainLength > 0)
       {
+        // Make sure the opponent keeps singing while the note is held.
         if (currentStage != null && currentStage.getDad() != null && currentStage.getDad().isSinging())
         {
           currentStage.getDad().holdTimer = 0;
         }
       }
 
-      // Handle missed hold note (release) logic for the opponent
       if (holdNote.missedNote && !holdNote.handledMiss)
       {
+        // When the opponent drops a hold note.
         holdNote.handledMiss = true;
+
+        // We dropped a hold note.
+        // Play miss animation, but don't penalize.
         currentStage.getOpponent().playSingAnimation(holdNote.noteData.getDirection(), true);
       }
     }
@@ -2363,11 +2482,6 @@ class PlayState extends MusicBeatSubState
     {
       if (note == null) continue;
 
-      if (note.isHoldNote && note.holdNoteSprite != null)
-      {
-        note.holdNoteSprite.alpha = 0.75; // Set transparency to 50%
-      }
-
       if (note.hasBeenHit)
       {
         note.tooEarly = false;
@@ -2376,38 +2490,46 @@ class PlayState extends MusicBeatSubState
         continue;
       }
 
-      var sustainLength = note.isHoldNote && note.holdNoteSprite != null ? note.holdNoteSprite.sustainLength : 0;
-      var hitWindowStartHead = note.strumTime - Constants.HIT_WINDOW_MS_HEAD;
-      var hitWindowEndHead = note.strumTime + Constants.HIT_WINDOW_MS_HEAD;
-      var hitWindowStartTail = note.strumTime + sustainLength - Constants.HIT_WINDOW_MS_TAIL;
-      var hitWindowEndTail = note.strumTime + sustainLength + Constants.HIT_WINDOW_MS_TAIL;
+      var hitWindowStart = note.strumTime - Constants.HIT_WINDOW_MS;
+      var hitWindowCenter = note.strumTime;
+      var hitWindowEnd = note.strumTime + Constants.HIT_WINDOW_MS;
 
-      // Handle missed head note for player
-      if (Conductor.instance.songPosition > hitWindowEndHead)
+      if (Conductor.instance.songPosition > hitWindowEnd)
       {
         if (note.hasMissed || note.hasBeenHit) continue;
         note.tooEarly = false;
         note.mayHit = false;
         note.hasMissed = true;
-        applyMissPenalty(note); // Apply miss penalty for head note miss
+        if (note.holdNoteSprite != null)
+        {
+          note.holdNoteSprite.missedNote = true;
+        }
       }
-      // Handle bot play mode for head notes
-      else if (isBotPlayMode && Conductor.instance.songPosition > note.strumTime)
+      else if (isBotPlayMode && Conductor.instance.songPosition > hitWindowCenter)
       {
         if (note.hasBeenHit) continue;
 
+        // We call onHitNote to play the proper animations,
+        // but not goodNoteHit! This means zero score and zero notes hit for the results screen!
+
+        // Call an event to allow canceling the note hit.
+        // NOTE: This is what handles the character animations!
         var event:NoteScriptEvent = new HitNoteScriptEvent(note, 0.0, 0, 'perfect', false, 0);
         dispatchEvent(event);
+
+        // Calling event.cancelEvent() skips all the other logic! Neat!
         if (event.eventCanceled) continue;
 
+        // Command the bot to hit the note on time.
+        // NOTE: This is what handles the strumline and cleaning up the note itself!
         playerStrumline.hitNote(note);
+
         if (note.holdNoteSprite != null)
         {
           playerStrumline.playNoteHoldCover(note.holdNoteSprite);
         }
       }
-      // Prepare for hitting the note
-      else if (Conductor.instance.songPosition > hitWindowStartHead)
+      else if (Conductor.instance.songPosition > hitWindowStart)
       {
         note.tooEarly = false;
         note.mayHit = true;
@@ -2422,18 +2544,25 @@ class PlayState extends MusicBeatSubState
         if (note.holdNoteSprite != null) note.holdNoteSprite.missedNote = false;
       }
 
-      // Handle missed note logic
+      // This becomes true when the note leaves the hit window.
+      // It might still be on screen.
       if (note.hasMissed && !note.handledMiss)
       {
-        var healthLost = Preferences.healthLoss != 0 ? -Constants.HEALTH_MISS_PENALTY : 0;
-        var event:NoteScriptEvent = new NoteScriptEvent(NOTE_MISS, note, healthLost, 0, true);
+        // Call an event to allow canceling the note miss.
+        // NOTE: This is what handles the character animations!
+        var event:NoteScriptEvent = new NoteScriptEvent(NOTE_MISS, note, -Constants.HEALTH_MISS_PENALTY, 0, true);
         dispatchEvent(event);
+
+        // Calling event.cancelEvent() skips all the other logic! Neat!
         if (event.eventCanceled) continue;
 
+        // Skip handling the miss in botplay!
         if (!isBotPlayMode)
         {
+          // Judge the miss.
+          // NOTE: This is what handles the scoring.
           trace('Missed note! ${note.noteData}');
-          onNoteMiss(note, event.playSound, event.healthChange); // Apply miss logic
+          onNoteMiss(note, event.playSound, event.healthChange);
         }
 
         note.handledMiss = true;
@@ -2441,33 +2570,33 @@ class PlayState extends MusicBeatSubState
     }
 
     // Process hold notes on the player's side.
+    // This handles scoring so we don't need it on the opponent's side.
     for (holdNote in playerStrumline.holdNotes.members)
     {
       if (holdNote == null || !holdNote.alive) continue;
 
-      // Player is holding the note correctly
+      // While the hold note is being hit, and there is length on the hold note...
       if (holdNote.hitNote && !holdNote.missedNote && holdNote.sustainLength > 0)
       {
+        // Grant the player health.
         health += Constants.HEALTH_HOLD_BONUS_PER_SECOND * elapsed;
+        songScore += Std.int(Constants.SCORE_HOLD_BONUS_PER_SECOND * elapsed);
 
-        if (!isBotPlayMode)
-        {
-          songScore += Std.int(Constants.SCORE_HOLD_BONUS_PER_SECOND * elapsed);
-        }
-
+        // Make sure the player keeps singing while the note is held by the bot.
         if (isBotPlayMode && currentStage != null && currentStage.getBoyfriend() != null && currentStage.getBoyfriend().isSinging())
         {
           currentStage.getBoyfriend().holdTimer = 0;
         }
       }
 
-      // Handle missed hold note release
       if (holdNote.missedNote && !holdNote.handledMiss)
       {
-        var healthLost = Preferences.healthLoss != 0 ? Constants.HEALTH_MISS_PENALTY : 0;
-        health -= healthLost; // Larger penalty for missing the release
+        // The player dropped a hold note.
         holdNote.handledMiss = true;
-        holdNote.alpha = 0.25; // Optional: Dim the hold note when missed
+
+        // Mute vocals and play miss animation, but don't penalize.
+        // vocals.playerVolume = 0;
+        // if (currentStage != null && currentStage.getBoyfriend() != null) currentStage.getBoyfriend().playSingAnimation(holdNote.noteData.getDirection(), true);
       }
     }
   }
@@ -2497,25 +2626,6 @@ class PlayState extends MusicBeatSubState
     opponentStrumline.handleSkippedNotes();
   }
 
-  function applyMissPenalty(note:NoteSprite):Void
-  {
-    // Play miss sound
-    FunkinSound.playOnce(Paths.soundRandom('missnote', 1, 3), FlxG.random.float(0.5, 0.6));
-
-    // Play miss animation
-    if (currentStage != null && currentStage.getBoyfriend() != null)
-    {
-      currentStage.getBoyfriend().playSingAnimation(note.noteData.getDirection(), true); // Play miss animation
-    }
-
-    // Subtract points (you can adjust the penalty as needed)
-    var missPenalty:Int = -50; // Subtract 50 points per miss
-    applyScore(missPenalty, 'miss', -Constants.HEALTH_MISS_PENALTY, true);
-
-    // Log miss for tally
-    trace('Missed note! ${note.noteData}');
-  }
-
   /**
      * PreciseInputEvents are put into a queue between update() calls,
      * and then processed here.
@@ -2524,6 +2634,7 @@ class PlayState extends MusicBeatSubState
   {
     if (inputPressQueue.length + inputReleaseQueue.length == 0) return;
 
+    // Ignore inputs during cutscenes.
     if (isInCutscene || disableKeys)
     {
       inputPressQueue = [];
@@ -2531,6 +2642,7 @@ class PlayState extends MusicBeatSubState
       return;
     }
 
+    // Generate a list of notes within range.
     var notesInRange:Array<NoteSprite> = playerStrumline.getNotesMayHit();
     var holdNotesInRange:Array<SustainTrail> = playerStrumline.getHoldNotesHitOrMissed();
 
@@ -2542,30 +2654,45 @@ class PlayState extends MusicBeatSubState
     while (inputPressQueue.length > 0)
     {
       var input:PreciseInputEvent = inputPressQueue.shift();
+
       playerStrumline.pressKey(input.noteDirection);
 
-      if (isBotPlayMode) continue;
+      // Don't credit or penalize inputs in Bot Play.
+      // if (isBotPlayMode) continue;
 
       var notesInDirection:Array<NoteSprite> = notesByDirection[input.noteDirection];
 
       if ((!playerStrumline.mayGhostTap()) && notesInDirection.length == 0)
       {
+        // Pressed a wrong key with no notes nearby.
+        // Perform a ghost miss (anti-spam).
         ghostNoteMiss(input.noteDirection, notesInRange.length > 0);
+
+        // Play the strumline animation.
         playerStrumline.playPress(input.noteDirection);
       }
       else if (notesInDirection.length == 0)
       {
+        // Press a key with no penalty.
+
+        // Play the strumline animation.
         playerStrumline.playPress(input.noteDirection);
       }
       else
       {
+        // Choose the first note, deprioritizing low priority notes.
         var targetNote:Null<NoteSprite> = notesInDirection.find((note) -> !note.lowPriority);
         if (targetNote == null) targetNote = notesInDirection[0];
         if (targetNote == null) continue;
 
-        goodNoteHit(targetNote, input); // Only award partial points here
+        // Judge and hit the note.
+        // trace('Hit note! ${targetNote.noteData}');
+        goodNoteHit(targetNote, input);
+        // trace('Score: ${songScore}');
 
         notesInDirection.remove(targetNote);
+
+        // Play the strumline animation.
         playerStrumline.playConfirm(input.noteDirection);
       }
     }
@@ -2573,62 +2700,54 @@ class PlayState extends MusicBeatSubState
     while (inputReleaseQueue.length > 0)
     {
       var input:PreciseInputEvent = inputReleaseQueue.shift();
-      playerStrumline.releaseKey(input.noteDirection);
-
-      var holdNote = holdNotesInRange.find((holdNote) -> holdNote.noteDirection == input.noteDirection && holdNote.hitNote);
-
-      // Handle early release (penalty)
-      if (holdNote != null && holdNote.sustainLength > 0 && Conductor.instance.songPosition < holdNote.strumTime + holdNote.sustainLength)
-      {
-        holdNote.missedNote = true;
-        health -= Constants.HEALTH_MISS_PENALTY; // Penalize early release
-      }
-
+      // Play the strumline animation.
       playerStrumline.playStatic(input.noteDirection);
+      playerStrumline.releaseKey(input.noteDirection);
     }
   }
 
   function goodNoteHit(note:NoteSprite, input:PreciseInputEvent):Void
   {
+    // Calculate the input latency (do this as late as possible).
+    // trace('Compare: ${PreciseInputManager.getCurrentTimestamp()} - ${input.timestamp}');
     var inputLatencyNs:Int64 = PreciseInputManager.getCurrentTimestamp() - input.timestamp;
     var inputLatencyMs:Float = inputLatencyNs.toFloat() / Constants.NS_PER_MS;
+    // trace('Input: ${daNote.noteData.getDirectionName()} pressed ${inputLatencyMs}ms ago!');
+
+    // Get the offset and compensate for input latency.
+    // Round inward (trim remainder) for consistency.
     var noteDiff:Int = Std.int(Conductor.instance.songPosition - note.noteData.time - inputLatencyMs);
+
+    totalNotes++;
 
     var score = Scoring.scoreNote(noteDiff, PBOT1);
     var daRating = Scoring.judgeNote(noteDiff, PBOT1);
 
-    var healthChange = 0.0;
-    var isComboBreak = false;
+    var healthChange:Float = 0.0;
+    var isComboBreak:Bool = false;
+    var noteHitIncrease:Float = 0;
+    switch (daRating)
+    {
+      case 'sick':
+        healthChange = Constants.HEALTH_SICK_BONUS;
+        isComboBreak = Constants.JUDGEMENT_SICK_COMBO_BREAK;
+        noteHitIncrease = 1;
+      case 'good':
+        healthChange = Constants.HEALTH_GOOD_BONUS;
+        isComboBreak = Constants.JUDGEMENT_GOOD_COMBO_BREAK;
+        noteHitIncrease = 0.8;
+      case 'bad':
+        healthChange = Constants.HEALTH_BAD_BONUS;
+        isComboBreak = Constants.JUDGEMENT_BAD_COMBO_BREAK;
+        noteHitIncrease = 0.5;
+      case 'shit':
+        healthChange = Constants.HEALTH_SHIT_BONUS;
+        isComboBreak = Constants.JUDGEMENT_SHIT_COMBO_BREAK;
+        noteHitIncrease = 0;
+    }
 
-    // Handle head note hit for sustain (partial health bonus)
-    if (note.isHoldNote)
-    {
-      switch (daRating)
-      {
-        case 'sick':
-          healthChange = Constants.HEALTH_SICK_BONUS / 2; // Award partial health for head hit
-        case 'good':
-          healthChange = Constants.HEALTH_GOOD_BONUS / 2;
-        case 'bad':
-          healthChange = Constants.HEALTH_BAD_BONUS / 2;
-        case 'shit':
-          healthChange = Constants.HEALTH_SHIT_BONUS / 2;
-      }
-    }
-    else // Non-hold notes get full health immediately
-    {
-      switch (daRating)
-      {
-        case 'sick':
-          healthChange = Constants.HEALTH_SICK_BONUS;
-        case 'good':
-          healthChange = Constants.HEALTH_GOOD_BONUS;
-        case 'bad':
-          healthChange = Constants.HEALTH_BAD_BONUS;
-        case 'shit':
-          healthChange = Constants.HEALTH_SHIT_BONUS;
-      }
-    }
+    totalNotesHit = totalNotesHit + noteHitIncrease;
+    // trace(totalNotesHit);
 
     if (Preferences.instaDeathMode != "None")
     {
@@ -2664,19 +2783,22 @@ class PlayState extends MusicBeatSubState
       }
     }
 
+    // Send the note hit event.
     var event:HitNoteScriptEvent = new HitNoteScriptEvent(note, healthChange, score, daRating, isComboBreak, Highscore.tallies.combo + 1, noteDiff,
       daRating == 'sick');
     dispatchEvent(event);
 
+    // Calling event.cancelEvent() skips all the other logic! Neat!
     if (event.eventCanceled) return;
 
     Highscore.tallies.totalNotesHit++;
+    // Display the hit on the strums
     playerStrumline.hitNote(note, !isComboBreak);
-
     if (event.doesNotesplash) playerStrumline.playNoteSplash(note.noteData.getDirection());
+    if (note.isHoldNote && note.holdNoteSprite != null) playerStrumline.playNoteHoldCover(note.holdNoteSprite);
+    vocals.playerVolume = 1;
 
-    if (event.doesNotesplash && note.isHoldNote && note.holdNoteSprite != null) playerStrumline.playNoteHoldCover(note.holdNoteSprite);
-
+    // Display the combo meter and add the calculation to the score.
     applyScore(event.score, event.judgement, event.healthChange, event.isComboBreak);
     popUpScore(event.judgement);
   }
@@ -2687,8 +2809,13 @@ class PlayState extends MusicBeatSubState
      */
   function onNoteMiss(note:NoteSprite, playSound:Bool = false, healthChange:Float):Void
   {
+    // If we are here, we already CALLED the onNoteMiss script hook!
+
+    totalNotes++;
+
     if (!isPracticeMode)
     {
+      // messy copy paste rn lol
       var pressArray:Array<Bool> = [
         controls.NOTE_LEFT_P,
         controls.NOTE_DOWN_P,
@@ -2723,23 +2850,15 @@ class PlayState extends MusicBeatSubState
           });
       }
     }
-    if (Preferences.instaDeathMode != "None")
-    {
-      health -= 9999; // instakill!!
-      trace("You Lost!");
-    }
-    if (Preferences.healthDrainType == "Penalty")
-    {
-      poison();
-    }
-
     vocals.playerVolume = 0;
 
-    // Handle missed tail release for hold notes
-    if (note.isHoldNote && note.holdNoteSprite != null && !note.holdNoteSprite.missedNote)
+    if (Preferences.instaDeathMode != 'None')
     {
-      health -= Constants.HEALTH_MISS_PENALTY; // Penalize for missing the release
-      trace('Missed hold note release! Health deducted.');
+      health -= 9999;
+    }
+    else if (Preferences.healthDrainType == 'Penalty')
+    {
+      poison();
     }
 
     applyScore(-10, 'miss', healthChange, true);
@@ -2907,10 +3026,7 @@ class PlayState extends MusicBeatSubState
       case 'miss':
         Highscore.tallies.missed += 1;
     }
-
-    // Apply health change for misses and hits
     health += healthChange;
-
     if (isComboBreak)
     {
       // Break the combo, but don't increment tallies.misses.
@@ -2922,8 +3038,6 @@ class PlayState extends MusicBeatSubState
       Highscore.tallies.combo++;
       if (Highscore.tallies.combo > Highscore.tallies.maxCombo) Highscore.tallies.maxCombo = Highscore.tallies.combo;
     }
-
-    // Apply score change
     songScore += score;
   }
 
@@ -2936,8 +3050,7 @@ class PlayState extends MusicBeatSubState
     {
       // If daRating is 'miss', that means we made a mistake and should not continue.
       FlxG.log.warn('popUpScore judged a note as a miss!');
-
-      // TODO: Remove this if needed
+      // TODO: Remove this.
       // comboPopUps.displayRating('miss');
       return;
     }
@@ -2980,8 +3093,6 @@ class PlayState extends MusicBeatSubState
           });
       }
     }
-
-    // Display combo and rating popups
     comboPopUps.displayRating(daRating);
     if (combo >= 10) comboPopUps.displayCombo(combo);
 
@@ -3101,7 +3212,7 @@ class PlayState extends MusicBeatSubState
       // adds current song data into the tallies for the level (story levels)
       Highscore.talliesLevel = Highscore.combineTallies(Highscore.tallies, Highscore.talliesLevel);
 
-      if (!isPracticeMode && !isBotPlayMode && SongLaunchState.saveScore)
+      if (!isPracticeMode && !isBotPlayMode && !SongLaunchState.saveScore)
       {
         isNewHighscore = Save.instance.isSongHighScore(currentSong.id, suffixedDifficulty, data);
 
@@ -3272,7 +3383,6 @@ class PlayState extends MusicBeatSubState
   {
     // If the camera is being tweened, stop it.
     cancelAllCameraTweens();
-    // FlxTween.clearTweens(this); // Clears tweens associated with PlayState
 
     // Dispatch the destroy event.
     dispatchEvent(new ScriptEvent(DESTROY, false));
@@ -3312,7 +3422,6 @@ class PlayState extends MusicBeatSubState
     // Remove reference to stage and remove sprites from it to save memory.
     if (currentStage != null)
     {
-      // currentStage.disposeStageAssets();
       remove(currentStage);
       currentStage.kill();
       currentStage = null;

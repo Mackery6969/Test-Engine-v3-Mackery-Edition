@@ -26,7 +26,7 @@ class Save
   public static final SAVE_DATA_VERSION:thx.semver.Version = "2.0.4";
   public static final SAVE_DATA_VERSION_RULE:thx.semver.VersionRule = "2.0.x";
 
-  public static final SAVE_DIRECTORY:String = FileSystem.absolutePath(Sys.getEnv("APPDATA") + "\\MackeryGames\\TestEngine");
+  public static final SAVE_DIRECTORY:String = FileSystem.absolutePath(Sys.getEnv("APPDATA") + "\\TECrew\\TestEngine");
   public static final SAVE_FILE:String = SAVE_DIRECTORY + "\\save.json";
   static final LEGACY_SAVE_PATH:String = "ninjamuffin99";
   static final LEGACY_SAVE_NAME:String = "funkin";

@@ -864,7 +864,7 @@ class PlayState extends MusicBeatSubState
 
   function updateComboShit():Void
   {
-    if (!Highscore.tallies.totalNotes == 0 && !isBotPlayMode);
+    if (!Highscore.tallies.totalNotes == 0 && !isBotPlayMode) // please mackery dont commit without testing :/
     {
       if (Highscore.tallies.missed == 0)
       {

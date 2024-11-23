@@ -4,9 +4,6 @@ import funkin.save.Save;
 import funkin.save.migrator.RawSaveData_v1_0_0;
 import thx.semver.Version;
 import funkin.util.VersionUtil;
-import sys.FileSystem;
-import sys.io.File;
-import haxe.Json;
 
 @:nullSafety
 class SaveDataMigrator
@@ -20,27 +17,27 @@ class SaveDataMigrator
 
     if (version == null)
     {
-      trace("[SAVE] No version found in save data! Returning blank data.");
+      trace('[SAVE] No version found in save data! Returning blank data.');
       trace(inputData);
-      archiveInvalidSaveData(inputData, "Invalid or missing version");
       return new Save(Save.getDefault());
     }
     else
     {
-      // Sometimes the Haxe serializer has issues with the version, so we fix it here.
+      // Sometimes the Haxe serializer has issues with the version so we fix it here.
       version = VersionUtil.repairVersion(version);
       if (VersionUtil.validateVersion(version, Save.SAVE_DATA_VERSION_RULE))
       {
         // Import the structured data.
         var saveDataWithDefaults:RawSaveData = cast thx.Objects.deepCombine(Save.getDefault(), inputData);
-        return new Save(saveDataWithDefaults);
+        var save:Save = new Save(saveDataWithDefaults);
+        return save;
       }
       else
       {
-        var message:String = "Error migrating save data, expected ${Save.SAVE_DATA_VERSION}.";
-        archiveInvalidSaveData(inputData, message);
-        lime.app.Application.current.window.alert("An error occurred migrating your save data.\n${message}\nInvalid data has been archived.",
-          "Save Data Failure");
+        var message:String = 'Error migrating save data, expected ${Save.SAVE_DATA_VERSION}.';
+        var slot:Int = Save.archiveBadSaveData(inputData);
+        var fullMessage:String = 'An error occurred migrating your save data.\n${message}\nInvalid data has been moved to save slot ${slot}.';
+        lime.app.Application.current.window.alert(fullMessage, "Save Data Failure");
         return new Save(Save.getDefault());
       }
     }
@@ -58,8 +55,9 @@ class SaveDataMigrator
     result.volume = inputSaveData.volume;
     result.mute = inputSaveData.mute;
 
-    // result.ngSessionId = inputSaveData.sessionId;
+    result.ngSessionId = inputSaveData.sessionId;
 
+    // TODO: Port over the save data from the legacy save data format.
     migrateLegacyScores(result, inputSaveData);
 
     migrateLegacyControls(result, inputSaveData);
@@ -67,35 +65,8 @@ class SaveDataMigrator
     return result;
   }
 
-  static function archiveInvalidSaveData(data:Dynamic, reason:String):Void
-  {
-    trace("[SAVE] Archiving invalid save data due to: " + reason);
-
-    // Ensure save directory exists
-    if (!FileSystem.exists(Save.SAVE_DIRECTORY))
-    {
-      FileSystem.createDirectory(Save.SAVE_DIRECTORY);
-    }
-
-    // Create a timestamped archive file
-    var timestamp:String = Date.now().toString().replace(":", "-");
-    var archiveFile:String = Save.SAVE_DIRECTORY + "/invalid_save_" + timestamp + ".json";
-
-    try
-    {
-      var saveJson = Json.stringify(data, '\t');
-      File.saveContent(archiveFile, saveJson);
-      trace("[SAVE] Invalid save data archived to: " + archiveFile);
-    }
-    catch (e:Dynamic)
-    {
-      trace("[SAVE] Failed to archive invalid save data: " + e);
-    }
-  }
-
   static function migrateLegacyScores(result:Save, inputSaveData:RawSaveData_v1_0_0):Void
   {
-    // Legacy score migration logic
     if (inputSaveData.songCompletion == null)
     {
       inputSaveData.songCompletion = [];
@@ -106,95 +77,179 @@ class SaveDataMigrator
       inputSaveData.songScores = [];
     }
 
-    for (levelId in ["week0", "week1", "week2", "week3", "week4", "week5", "week6", "week7"])
-    {
-      migrateLegacyLevelScore(result, inputSaveData, levelId);
-    }
+    migrateLegacyLevelScore(result, inputSaveData, 'week0');
+    migrateLegacyLevelScore(result, inputSaveData, 'week1');
+    migrateLegacyLevelScore(result, inputSaveData, 'week2');
+    migrateLegacyLevelScore(result, inputSaveData, 'week3');
+    migrateLegacyLevelScore(result, inputSaveData, 'week4');
+    migrateLegacyLevelScore(result, inputSaveData, 'week5');
+    migrateLegacyLevelScore(result, inputSaveData, 'week6');
+    migrateLegacyLevelScore(result, inputSaveData, 'week7');
 
-    for (songIdGroup in [
-      ["tutorial", "Tutorial"],
-      ["bopeebo", "Bopeebo"],
-      ["fresh", "Fresh"],
-      ["dadbattle", "Dadbattle"],
-      ["monster", "Monster"],
-      ["south", "South"],
-      ["spookeez", "Spookeez"],
-      ["pico", "Pico"],
-      ["philly-nice", "Philly", "philly", "Philly-Nice"],
-      ["blammed", "Blammed"],
-      ["satin-panties", "Satin-Panties"],
-      ["high", "High"],
-      ["milf", "Milf", "MILF"],
-      ["cocoa", "Cocoa"],
-      ["eggnog", "Eggnog"],
-      ["winter-horrorland", "Winter-Horrorland"],
-      ["senpai", "Senpai"],
-      ["roses", "Roses"],
-      ["thorns", "Thorns"],
-      ["ugh", "Ugh"],
-      ["guns", "Guns"],
-      ["stress", "Stress"]
-    ])
-    {
-      migrateLegacySongScore(result, inputSaveData, songIdGroup);
-    }
+    migrateLegacySongScore(result, inputSaveData, ['tutorial', 'Tutorial']);
+
+    migrateLegacySongScore(result, inputSaveData, ['bopeebo', 'Bopeebo']);
+    migrateLegacySongScore(result, inputSaveData, ['fresh', 'Fresh']);
+    migrateLegacySongScore(result, inputSaveData, ['dadbattle', 'Dadbattle']);
+
+    migrateLegacySongScore(result, inputSaveData, ['monster', 'Monster']);
+    migrateLegacySongScore(result, inputSaveData, ['south', 'South']);
+    migrateLegacySongScore(result, inputSaveData, ['spookeez', 'Spookeez']);
+
+    migrateLegacySongScore(result, inputSaveData, ['pico', 'Pico']);
+    migrateLegacySongScore(result, inputSaveData, ['philly-nice', 'Philly', 'philly', 'Philly-Nice']);
+    migrateLegacySongScore(result, inputSaveData, ['blammed', 'Blammed']);
+
+    migrateLegacySongScore(result, inputSaveData, ['satin-panties', 'Satin-Panties']);
+    migrateLegacySongScore(result, inputSaveData, ['high', 'High']);
+    migrateLegacySongScore(result, inputSaveData, ['milf', 'Milf', 'MILF']);
+
+    migrateLegacySongScore(result, inputSaveData, ['cocoa', 'Cocoa']);
+    migrateLegacySongScore(result, inputSaveData, ['eggnog', 'Eggnog']);
+    migrateLegacySongScore(result, inputSaveData, ['winter-horrorland', 'Winter-Horrorland']);
+
+    migrateLegacySongScore(result, inputSaveData, ['senpai', 'Senpai']);
+    migrateLegacySongScore(result, inputSaveData, ['roses', 'Roses']);
+    migrateLegacySongScore(result, inputSaveData, ['thorns', 'Thorns']);
+
+    migrateLegacySongScore(result, inputSaveData, ['ugh', 'Ugh']);
+    migrateLegacySongScore(result, inputSaveData, ['guns', 'Guns']);
+    migrateLegacySongScore(result, inputSaveData, ['stress', 'Stress']);
   }
 
   static function migrateLegacyLevelScore(result:Save, inputSaveData:RawSaveData_v1_0_0, levelId:String):Void
   {
-    // Migrate scores for each difficulty
-    for (difficulty in ["easy", "normal", "hard"])
-    {
-      var key:String = (difficulty == "normal") ? levelId : "${levelId}-${difficulty}";
-      var score:SaveScoreData =
-        {
-          score: Std.int(inputSaveData.songScores.get(key) ?? 0),
-          tallies:
-            {
-              sick: 0,
-              good: 0,
-              bad: 0,
-              shit: 0,
-              missed: 0,
-              combo: 0,
-              maxCombo: 0,
-              totalNotesHit: 0,
-              totalNotes: 0
-            }
-        };
-      result.setLevelScore(levelId, difficulty, score);
-    }
+    var scoreDataEasy:SaveScoreData =
+      {
+        score: inputSaveData.songScores.get('${levelId}-easy') ?? 0,
+        // accuracy: inputSaveData.songCompletion.get('${levelId}-easy') ?? 0.0,
+        tallies:
+          {
+            sick: 0,
+            good: 0,
+            bad: 0,
+            shit: 0,
+            missed: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalNotesHit: 0,
+            totalNotes: 0,
+          }
+      };
+    result.setLevelScore(levelId, 'easy', scoreDataEasy);
+
+    var scoreDataNormal:SaveScoreData =
+      {
+        score: inputSaveData.songScores.get('${levelId}') ?? 0,
+        // accuracy: inputSaveData.songCompletion.get('${levelId}') ?? 0.0,
+        tallies:
+          {
+            sick: 0,
+            good: 0,
+            bad: 0,
+            shit: 0,
+            missed: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalNotesHit: 0,
+            totalNotes: 0,
+          }
+      };
+    result.setLevelScore(levelId, 'normal', scoreDataNormal);
+
+    var scoreDataHard:SaveScoreData =
+      {
+        score: inputSaveData.songScores.get('${levelId}-hard') ?? 0,
+        // accuracy: inputSaveData.songCompletion.get('${levelId}-hard') ?? 0.0,
+        tallies:
+          {
+            sick: 0,
+            good: 0,
+            bad: 0,
+            shit: 0,
+            missed: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalNotesHit: 0,
+            totalNotes: 0,
+          }
+      };
+    result.setLevelScore(levelId, 'hard', scoreDataHard);
   }
 
   static function migrateLegacySongScore(result:Save, inputSaveData:RawSaveData_v1_0_0, songIds:Array<String>):Void
   {
-    for (difficulty in ["easy", "normal", "hard"])
-    {
-      var score:SaveScoreData =
-        {
-          score: 0,
-          tallies:
-            {
-              sick: 0,
-              good: 0,
-              bad: 0,
-              shit: 0,
-              missed: 0,
-              combo: 0,
-              maxCombo: 0,
-              totalNotesHit: 0,
-              totalNotes: 0,
-            }
-        };
-
-      for (songId in songIds)
+    var scoreDataEasy:SaveScoreData =
       {
-        var key:String = (difficulty == "normal") ? songId : "${songId}-${difficulty}";
-        score.score = Std.int(Math.max(score.score, inputSaveData.songScores.get(key) ?? 0));
-      }
+        score: 0,
+        tallies:
+          {
+            sick: 0,
+            good: 0,
+            bad: 0,
+            shit: 0,
+            missed: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalNotesHit: 0,
+            totalNotes: 0,
+          }
+      };
 
-      result.setSongScore(songIds[0], difficulty, score);
+    for (songId in songIds)
+    {
+      scoreDataEasy.score = Std.int(Math.max(scoreDataEasy.score, inputSaveData.songScores.get('${songId}-easy') ?? 0));
+      // scoreDataEasy.accuracy = Math.max(scoreDataEasy.accuracy, inputSaveData.songCompletion.get('${songId}-easy') ?? 0.0);
     }
+    result.setSongScore(songIds[0], 'easy', scoreDataEasy);
+
+    var scoreDataNormal:SaveScoreData =
+      {
+        score: 0,
+        tallies:
+          {
+            sick: 0,
+            good: 0,
+            bad: 0,
+            shit: 0,
+            missed: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalNotesHit: 0,
+            totalNotes: 0,
+          }
+      };
+
+    for (songId in songIds)
+    {
+      scoreDataNormal.score = Std.int(Math.max(scoreDataNormal.score, inputSaveData.songScores.get('${songId}') ?? 0));
+      // scoreDataNormal.accuracy = Math.max(scoreDataNormal.accuracy, inputSaveData.songCompletion.get('${songId}') ?? 0.0);
+    }
+    result.setSongScore(songIds[0], 'normal', scoreDataNormal);
+
+    var scoreDataHard:SaveScoreData =
+      {
+        score: 0,
+        tallies:
+          {
+            sick: 0,
+            good: 0,
+            bad: 0,
+            shit: 0,
+            missed: 0,
+            combo: 0,
+            maxCombo: 0,
+            totalNotesHit: 0,
+            totalNotes: 0,
+          }
+      };
+
+    for (songId in songIds)
+    {
+      scoreDataHard.score = Std.int(Math.max(scoreDataHard.score, inputSaveData.songScores.get('${songId}-hard') ?? 0));
+      // scoreDataHard.accuracy = Math.max(scoreDataHard.accuracy, inputSaveData.songCompletion.get('${songId}-hard') ?? 0.0);
+    }
+    result.setSongScore(songIds[0], 'hard', scoreDataHard);
   }
 
   static function migrateLegacyControls(result:Save, inputSaveData:RawSaveData_v1_0_0):Void
@@ -234,8 +289,6 @@ class SaveDataMigrator
         VOLUME_UP: controlsData?.keys?.VOLUME_UP ?? null,
       };
 
-    result.setControls(playerId, Keys, outputKeyControls);
-
     var outputPadControls:SaveControlsData =
       {
         ACCEPT: controlsData?.pad?.ACCEPT ?? null,
@@ -256,6 +309,7 @@ class SaveDataMigrator
         VOLUME_UP: controlsData?.pad?.VOLUME_UP ?? null,
       };
 
+    result.setControls(playerId, Keys, outputKeyControls);
     result.setControls(playerId, Gamepad(0), outputPadControls);
   }
 }

@@ -864,40 +864,41 @@ class PlayState extends MusicBeatSubState
 
   function updateComboShit():Void
   {
-    if (Highscore.tallies.totalNotes == 0 || isBotPlayMode) return;
-
-    if (Highscore.tallies.missed == 0)
+    if (!Highscore.tallies.totalNotes == 0 && !isBotPlayMode);
     {
-      isFC = true;
+      if (Highscore.tallies.missed == 0)
+      {
+        isFC = true;
 
-      if (Highscore.tallies.sick > 0 && Highscore.tallies.good == 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
-      {
-        isSFC = true;
+        if (Highscore.tallies.sick > 0 && Highscore.tallies.good == 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+        {
+          isSFC = true;
+        }
+        else if (Highscore.tallies.good > 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+        {
+          isSFC = false;
+          isGFC = true;
+        }
+        else
+        {
+          isGFC = false;
+        }
       }
-      else if (Highscore.tallies.good > 0 && Highscore.tallies.bad == 0 && Highscore.tallies.shit == 0)
+      else if (Highscore.tallies.missed > 0 && Highscore.tallies.missed <= 10)
       {
-        isSFC = false;
-        isGFC = true;
+        isSDCB = true;
       }
       else
       {
+        isSDCB = false;
+      }
+
+      if (Highscore.tallies.missed != 0)
+      {
+        isFC = false;
+        isSFC = false;
         isGFC = false;
       }
-    }
-    else if (Highscore.tallies.missed > 0 && Highscore.tallies.missed <= 10)
-    {
-      isSDCB = true;
-    }
-    else
-    {
-      isSDCB = false;
-    }
-
-    if (Highscore.tallies.missed != 0)
-    {
-      isFC = false;
-      isSFC = false;
-      isGFC = false;
     }
   }
 

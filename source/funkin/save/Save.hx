@@ -22,7 +22,7 @@ class Save
   public static final SAVE_DATA_VERSION_RULE:thx.semver.VersionRule = "2.0.x";
 
   // We load this version's saves from a new save path, to maintain SOME level of backwards compatibility.
-  static final SAVE_PATH:String = 'MackeryGames';
+  static final SAVE_PATH:String = 'TECrew';
   static final SAVE_NAME:String = 'TestEngine';
 
   static final SAVE_PATH_LEGACY:String = 'ninjamuffin99';

@@ -49,14 +49,24 @@ class Save
   public static function load():Save
   {
     trace("[SAVE] Loading save...");
-    if (querySlot(1))
+    try
     {
-      return loadFromSlot(1);
+      if (querySlot(1))
+      {
+        return loadFromSlot(1);
+      }
+      else
+      {
+        trace("[SAVE] No save data found in slot 1. Creating a new save...");
+        var newSave = new Save();
+        newSave.flush(); // Save the default state
+        return newSave;
+      }
     }
-    else
+    catch (e:Dynamic)
     {
-      trace("[SAVE] No save data found in slot 1. Creating a new save...");
-      return new Save();
+      trace("[SAVE] Error during save loading: " + e);
+      return new Save(); // Always return a default save on failure
     }
   }
 
@@ -985,9 +995,22 @@ class Save
   public function flush():Void
   {
     trace('[SAVE] Flushing save data...');
+    if (!FlxG.save.bind(SAVE_NAME, SAVE_PATH))
+    {
+      trace('[SAVE] Failed to bind save. Ensure the path and permissions are correct.');
+      return;
+    }
+
+    // Log the data being saved
+    trace('[SAVE] Save data content: ' + haxe.Json.stringify(data));
+
     if (!FlxG.save.flush())
     {
       trace('[SAVE] Failed to flush save data. Check file permissions or storage availability.');
+    }
+    else
+    {
+      trace('[SAVE] Save data successfully written.');
     }
   }
 
@@ -1004,7 +1027,7 @@ class Save
 
     if (!FlxG.save.bind('$SAVE_NAME${slot}', SAVE_PATH))
     {
-      trace("[SAVE] Failed to bind save for slot $slot at $SAVE_PATH.");
+      trace('[SAVE] Failed to bind save for slot $slot at $SAVE_PATH.');
       return new Save(); // Return new save on failure
     }
 
